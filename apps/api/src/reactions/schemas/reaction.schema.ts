@@ -17,3 +17,5 @@ export class Reaction extends Document {
 }
 
 export const ReactionSchema = SchemaFactory.createForClass(Reaction);
+// One reaction per user per chapter
+ReactionSchema.index({ giverId: 1, chapterId: 1 }, { unique: true });

@@ -10,6 +10,9 @@ export class Chapter extends Document {
   @Prop({ type: String, enum: ChapterStatus, default: ChapterStatus.PENDING, index: true })
   status: ChapterStatus;
 
+  @Prop({ type: Number, default: 0 })
+  order: number;
+
   @Prop({ type: Types.ObjectId, ref: 'Topic', required: true, index: true })
   topicId: Types.ObjectId;
 }

@@ -1,8 +1,8 @@
-export interface IUser {
-  _id: string;
-  email: string;
-  name: string;
-  avatar?: string | null;
+// ─── Enums ───────────────────────────────────────────────
+
+export enum SystemRole {
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  USER = 'USER',
 }
 
 export enum GoalRole {
@@ -10,11 +10,20 @@ export enum GoalRole {
   USER = 'USER',
 }
 
-export interface IGoalMember {
+export enum ChapterStatus {
+  PENDING = 'PENDING',
+  COMPLETED = 'COMPLETED',
+}
+
+// ─── Interfaces ──────────────────────────────────────────
+
+export interface IUser {
   _id: string;
-  role: GoalRole;
-  userId: string | IUser;
-  goalId: string;
+  email: string;
+  name: string;
+  avatar?: string | null;
+  role: SystemRole;
+  lastSeenAt?: Date | null;
 }
 
 export interface IGoal {
@@ -27,27 +36,33 @@ export interface IGoal {
   adminId: string | IUser;
 }
 
-export interface ITopic {
+export interface IGoalMember {
   _id: string;
-  title: string;
+  role: GoalRole;
+  userId: string | IUser;
   goalId: string;
 }
 
-export enum ChapterStatus {
-  PENDING = 'PENDING',
-  COMPLETED = 'COMPLETED',
+export interface ITopic {
+  _id: string;
+  title: string;
+  description?: string;
+  order: number;
+  goalId: string;
 }
 
 export interface IChapter {
   _id: string;
   title: string;
   status: ChapterStatus;
+  order: number;
   topicId: string;
 }
 
 export interface IStudySession {
   _id: string;
   durationSeconds: number;
+  startedAt: Date;
   userId: string | IUser;
   goalId: string;
   chapterId?: string;

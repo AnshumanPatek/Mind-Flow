@@ -6,6 +6,9 @@ export class StudySession extends Document {
   @Prop({ required: true, min: 1 })
   durationSeconds: number;
 
+  @Prop({ type: Date, required: true })
+  startedAt: Date;
+
   @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
   userId: Types.ObjectId;
 

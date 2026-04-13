@@ -1,0 +1,468 @@
+{
+  "info": {
+    "name": "Mind-Flow API",
+    "description": "API collection for Mind-Flow Backend (NestJS)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get Stats",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/stats"
+          }
+        },
+        {
+          "name": "Get All Users (Admin)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/users"
+          }
+        },
+        {
+          "name": "Get All Goals (Admin)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/goals"
+          }
+        },
+        {
+          "name": "Get Recent Activity",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/activity?limit=20"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"name\": \"Test User\",\n  \"avatar\": \"https://example.com/avatar.png\"\n}"
+            },
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/:id"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\"\n}"
+            },
+            "url": "{{baseUrl}}/users/:id"
+          }
+        },
+        {
+          "name": "Send Heartbeat (Online Status)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/users/:id/heartbeat"
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/users/:id"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Goals",
+      "item": [
+        {
+          "name": "Create Goal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Learn NestJS\",\n  \"description\": \"Master backend development with NestJS\",\n  \"adminId\": \"<USER_OBJECT_ID>\",\n  \"settings\": {\n    \"virtualRoomUrl\": \"https://meet.google.com/xyz\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}/goals"
+          }
+        },
+        {
+          "name": "Get All Goals",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/goals?userId=<USER_OBJECT_ID>",
+              "host": ["{{baseUrl}}"],
+              "path": ["goals"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "<USER_OBJECT_ID>",
+                  "description": "Filter by user ID (optional)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Goal by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/goals/:id"
+          }
+        },
+        {
+          "name": "Update Goal",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Goal Title\"\n}"
+            },
+            "url": "{{baseUrl}}/goals/:id"
+          }
+        },
+        {
+          "name": "Delete Goal",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/goals/:id"
+          }
+        },
+        {
+          "name": "Add Member to Goal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"<USER_OBJECT_ID>\",\n  \"role\": \"USER\"\n}"
+            },
+            "url": "{{baseUrl}}/goals/:id/members"
+          }
+        },
+        {
+          "name": "Get Goal Members",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/goals/:id/members"
+          }
+        },
+        {
+          "name": "Remove Member",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/goals/:id/members/:userId"
+          }
+        },
+        {
+          "name": "Get Goal Leaderboard",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/goals/:id/leaderboard"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Topics",
+      "item": [
+        {
+          "name": "Create Topic",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Modules and Controllers\",\n  \"description\": \"Understanding the basics\",\n  \"order\": 1,\n  \"goalId\": \"<GOAL_OBJECT_ID>\"\n}"
+            },
+            "url": "{{baseUrl}}/topics"
+          }
+        },
+        {
+          "name": "Get Topics by Goal",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/topics?goalId=<GOAL_OBJECT_ID>",
+              "host": ["{{baseUrl}}"],
+              "path": ["topics"],
+              "query": [
+                {
+                  "key": "goalId",
+                  "value": "<GOAL_OBJECT_ID>"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Topic by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/topics/:id"
+          }
+        },
+        {
+          "name": "Update Topic",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order\": 2\n}"
+            },
+            "url": "{{baseUrl}}/topics/:id"
+          }
+        },
+        {
+          "name": "Delete Topic",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/topics/:id"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chapters",
+      "item": [
+        {
+          "name": "Create Chapter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"What is a Controller?\",\n  \"status\": \"PENDING\",\n  \"order\": 1,\n  \"topicId\": \"<TOPIC_OBJECT_ID>\"\n}"
+            },
+            "url": "{{baseUrl}}/chapters"
+          }
+        },
+        {
+          "name": "Get Chapters by Topic",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/chapters?topicId=<TOPIC_OBJECT_ID>",
+              "host": ["{{baseUrl}}"],
+              "path": ["chapters"],
+              "query": [
+                {
+                  "key": "topicId",
+                  "value": "<TOPIC_OBJECT_ID>"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Chapter by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/chapters/:id"
+          }
+        },
+        {
+          "name": "Update Chapter Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\"\n}"
+            },
+            "url": "{{baseUrl}}/chapters/:id"
+          }
+        },
+        {
+          "name": "Delete Chapter",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/chapters/:id"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Study Sessions",
+      "item": [
+        {
+          "name": "Log Study Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"durationSeconds\": 1800,\n  \"startedAt\": \"2023-11-01T10:00:00Z\",\n  \"userId\": \"<USER_OBJECT_ID>\",\n  \"goalId\": \"<GOAL_OBJECT_ID>\",\n  \"chapterId\": \"<CHAPTER_OBJECT_ID>\"\n}"
+            },
+            "url": "{{baseUrl}}/study-sessions"
+          }
+        },
+        {
+          "name": "Get Study Sessions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/study-sessions?userId=<USER_OBJECT_ID>&goalId=<GOAL_OBJECT_ID>",
+              "host": ["{{baseUrl}}"],
+              "path": ["study-sessions"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "<USER_OBJECT_ID>"
+                },
+                {
+                  "key": "goalId",
+                  "value": "<GOAL_OBJECT_ID>"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Study Session",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/study-sessions/:id"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reactions",
+      "item": [
+        {
+          "name": "Give Reaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"🔥\",\n  \"chapterId\": \"<CHAPTER_OBJECT_ID>\",\n  \"giverId\": \"<GIVER_USER_ID>\",\n  \"receiverId\": \"<RECEIVER_USER_ID>\"\n}"
+            },
+            "url": "{{baseUrl}}/reactions"
+          }
+        },
+        {
+          "name": "Get Reactions by Chapter",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reactions?chapterId=<CHAPTER_OBJECT_ID>",
+              "host": ["{{baseUrl}}"],
+              "path": ["reactions"],
+              "query": [
+                {
+                  "key": "chapterId",
+                  "value": "<CHAPTER_OBJECT_ID>"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Reactions Received by User",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reactions/user/:receiverId"
+          }
+        },
+        {
+          "name": "Remove Reaction",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/reactions/:id"
+          }
+        }
+      ]
+    }
+  ]
+}

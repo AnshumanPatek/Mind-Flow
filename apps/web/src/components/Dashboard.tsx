@@ -15,25 +15,26 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { MOCK_GOALS, MOCK_USER } from "@/lib/mock-data";
+import { Goal, User } from "@/types";
 import { cn } from "@/lib/utils";
-import { Goal } from "@/types";
 
 interface DashboardProps {
+  user: User;
+  goals: Goal[];
   onSelectGoal: (goal: Goal) => void;
   onCreateGoal: () => void;
 }
 
-export function Dashboard({ onSelectGoal, onCreateGoal }: DashboardProps) {
+export function Dashboard({ user, goals, onSelectGoal, onCreateGoal }: DashboardProps) {
   return (
     <div className="space-y-8 pb-20">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <motion.h1 initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-4xl font-serif font-bold text-slate-900">
-            Welcome back, {MOCK_USER.name}
+            Welcome back, {user?.name || "Guest"}
           </motion.h1>
           <motion.p initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }} className="text-slate-500 mt-2">
-            You have {MOCK_GOALS.length} active goals with your friends.
+            You have {goals.length} active goals with your friends.
           </motion.p>
         </div>
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2 }}>
@@ -46,9 +47,9 @@ export function Dashboard({ onSelectGoal, onCreateGoal }: DashboardProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { label: "Total Study Time", value: `${MOCK_USER.totalHours}h`, icon: Clock, color: "text-blue-500", bg: "bg-blue-50" },
-          { label: "Chapters Done", value: MOCK_USER.chaptersCompleted, icon: Target, color: "text-brand-500", bg: "bg-brand-50" },
-          { label: "Respect Earned", value: MOCK_USER.respectPoints, icon: Flame, color: "text-orange-500", bg: "bg-orange-50" },
+          { label: "Total Study Time", value: `${user?.totalHours || 0}h`, icon: Clock, color: "text-blue-500", bg: "bg-blue-50" },
+          { label: "Chapters Done", value: user?.chaptersCompleted || 0, icon: Target, color: "text-brand-500", bg: "bg-brand-50" },
+          { label: "Respect Earned", value: user?.respectPoints || 0, icon: Flame, color: "text-orange-500", bg: "bg-orange-50" },
         ].map((stat, i) => (
           <motion.div key={stat.label} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 + i * 0.1 }}>
             <Card className="glass-card border-none">
@@ -75,7 +76,7 @@ export function Dashboard({ onSelectGoal, onCreateGoal }: DashboardProps) {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {MOCK_GOALS.map((goal, i) => (
+          {goals.map((goal, i) => (
             <motion.div key={goal.id} initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.5 + i * 0.1 }} whileHover={{ y: -4 }} onClick={() => onSelectGoal(goal)} className="cursor-pointer">
               <Card className="glass-card border-none h-full overflow-hidden group">
                 <CardHeader className="pb-4">

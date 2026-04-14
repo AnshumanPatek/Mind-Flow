@@ -21,23 +21,45 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Goal, Chapter } from "@/types";
-import { MOCK_USER } from "@/lib/mock-data";
+import { Goal, Chapter, User } from "@/types";
 import { cn } from "@/lib/utils";
+import { giveReaction, updateChapterStatus, createTopic, createChapter } from "@/lib/api";
 
 interface GoalDetailProps {
+  user: User;
   goal: Goal;
   onBack: () => void;
 }
 
-export function GoalDetail({ goal, onBack }: GoalDetailProps) {
-  const [completedChapters, setCompletedChapters] = useState<Set<string>>(new Set(["c1", "c2"]));
+export function GoalDetail({ user, goal, onBack }: GoalDetailProps) {
+  const [completedChapters, setCompletedChapters] = useState<Set<string>>(new Set());
 
-  const toggleChapter = (chapterId: string) => {
+  const toggleChapter = async (chapterId: string) => {
+    const isCompleted = completedChapters.has(chapterId);
+    const newStatus = isCompleted ? "PENDING" : "COMPLETED";
+    
+    // Update local state optimistic UI
     const newSet = new Set(completedChapters);
-    if (newSet.has(chapterId)) newSet.delete(chapterId);
+    if (isCompleted) newSet.delete(chapterId);
     else newSet.add(chapterId);
     setCompletedChapters(newSet);
+
+    // Call API
+    await updateChapterStatus(chapterId, newStatus).catch(console.error);
+  };
+
+  const handleAddTopic = async () => {
+    const title = prompt("Enter topic title:");
+    if (!title) return;
+    await createTopic({ title, goalId: goal.id, order: goal.topics.length + 1 });
+    window.location.reload(); // Quick refresh to load
+  };
+
+  const handleAddChapter = async (topicId: string, currentChaptersCount: number) => {
+    const title = prompt("Enter chapter title:");
+    if (!title) return;
+    await createChapter({ title, topicId: topicId, order: currentChaptersCount + 1, status: "PENDING" });
+    window.location.reload(); // Quick refresh
   };
 
   const totalChapters = goal.topics.reduce((acc, t) => acc + t.chapters.length, 0);
@@ -98,8 +120,11 @@ export function GoalDetail({ goal, onBack }: GoalDetailProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <h2 className="text-2xl font-serif font-bold text-slate-900">Curriculum</h2>
-          <Accordion defaultValue={["t1"]} className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-serif font-bold text-slate-900">Curriculum</h2>
+            <Button variant="outline" size="sm" onClick={handleAddTopic}>+ Add Topic</Button>
+          </div>
+          <Accordion defaultValue={goal.topics[0]?.id ? [goal.topics[0].id] : []} className="space-y-4">
             {goal.topics.map((topic) => (
               <AccordionItem key={topic.id} value={topic.id} className="border-none glass-card rounded-2xl overflow-hidden">
                 <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-white/50 transition-colors">
@@ -116,6 +141,9 @@ export function GoalDetail({ goal, onBack }: GoalDetailProps) {
                     {topic.chapters.map((chapter) => (
                       <ChapterItem key={chapter.id} chapter={chapter} isCompleted={completedChapters.has(chapter.id)} onToggle={() => toggleChapter(chapter.id)} />
                     ))}
+                    <Button variant="ghost" className="w-full text-slate-400" onClick={() => handleAddChapter(topic.id, topic.chapters.length)}>
+                      + Add Chapter
+                    </Button>
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -142,13 +170,27 @@ export function GoalDetail({ goal, onBack }: GoalDetailProps) {
                       <p className="text-xs text-slate-400 capitalize">{member.role}</p>
                     </div>
                   </div>
-                  {member.userId === MOCK_USER.id ? (
+                  {member.userId === user?.id ? (
                     <Badge className="bg-brand-50 text-brand-600 border-none">You</Badge>
                   ) : (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-orange-400 hover:text-orange-500 hover:bg-orange-50">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-orange-400 hover:text-orange-500 hover:bg-orange-50"
+                            onClick={async () => {
+                              try {
+                                await giveReaction({
+                                  type: "🔥",
+                                  chapterId: goal.topics[0]?.chapters[0]?.id || "default",
+                                  giverId: user.id,
+                                  receiverId: member.userId
+                                });
+                              } catch(e) { console.error(e) }
+                            }}
+                          >
                             <Flame className="w-4 h-4" />
                           </Button>
                         </TooltipTrigger>
@@ -161,30 +203,12 @@ export function GoalDetail({ goal, onBack }: GoalDetailProps) {
             </div>
           </section>
 
-          <section className="glass-card rounded-3xl p-6 space-y-6 bg-slate-900 text-white">
+          <section className="glass-card rounded-3xl p-6 space-y-6 bg-slate-900 text-white hidden">
             <div className="flex items-center justify-between">
               <h3 className="font-serif font-bold text-xl">Leaderboard</h3>
               <Trophy className="w-5 h-5 text-yellow-400" />
             </div>
-            <div className="space-y-4">
-              {[
-                { name: "Mike", score: 15, rank: 1, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike" },
-                { name: "Anshuman", score: 12, rank: 2, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Anshuman" },
-                { name: "Sarah", score: 10, rank: 3, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" },
-              ].map((entry) => (
-                <div key={entry.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-bold text-slate-500 w-4">{entry.rank}</span>
-                    <Avatar className="w-8 h-8 border border-slate-700"><AvatarImage src={entry.avatar} /></Avatar>
-                    <span className="text-sm font-medium">{entry.name}</span>
-                  </div>
-                  <span className="text-sm font-bold text-brand-400">{entry.score} pts</span>
-                </div>
-              ))}
-            </div>
-            <Button variant="ghost" className="w-full text-slate-400 hover:text-white hover:bg-white/10 text-xs">
-              View Full Leaderboard
-            </Button>
+            {/* Kept here but hidden until global goal specific leaderboard is injected fully */}
           </section>
         </div>
       </div>

@@ -22,9 +22,12 @@ import { Dashboard } from "@/components/Dashboard";
 import { GoalDetail } from "@/components/GoalDetail";
 import { Leaderboard } from "@/components/Leaderboard";
 import { StudyTimer } from "@/components/StudyTimer";
-import { MOCK_GOALS, MOCK_USER } from "@/lib/mock-data";
+import { Login } from "@/components/Login";
+import { CreateGoalModal } from "@/components/CreateGoalModal";
 import { cn } from "@/lib/utils";
-import { Goal } from "@/types";
+import { Goal, User, LeaderboardEntry } from "@/types";
+import { getGoals, getUsers, getLeaderboard, logStudySession } from "@/lib/api";
+import { MOCK_USER } from "@/lib/mock-data";
 
 type View = "dashboard" | "goal-detail" | "leaderboard" | "history";
 
@@ -32,6 +35,39 @@ export default function Home() {
   const [currentView, setCurrentView] = useState<View>("dashboard");
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  const [user, setUser] = useState<User | null>(null);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateGoal, setShowCreateGoal] = useState(false);
+
+  const fetchMainData = async () => {
+    try {
+      const [fetchedUsers, fetchedGoals] = await Promise.all([
+        getUsers(),
+        getGoals()
+      ]);
+      setAllUsers(fetchedUsers || []);
+      
+      let activeGoals = fetchedGoals || [];
+      setGoals(activeGoals);
+      
+      if (activeGoals.length > 0) {
+        const fetchedLeaderboard = await getLeaderboard(activeGoals[0].id);
+        setLeaderboard(fetchedLeaderboard);
+      }
+    } catch (err) {
+      console.error("Failed to fetch data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchMainData();
+  }, []);
 
   const handleSelectGoal = (goal: Goal) => {
     setSelectedGoal(goal);
@@ -43,6 +79,14 @@ export default function Home() {
     { id: "leaderboard", label: "Leaderboard", icon: Trophy },
     { id: "history", label: "Session History", icon: History },
   ];
+
+  if (!user && !loading) {
+    return <Login availableUsers={allUsers} onLogin={(u) => setUser(u)} />;
+  }
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading MindFlow...</div>;
+  }
 
   return (
     <TooltipProvider>
@@ -91,15 +135,15 @@ export default function Home() {
             <div className="mt-auto pt-6 border-t border-slate-100">
               <div className="flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-100 transition-colors cursor-pointer">
                 <Avatar className="w-10 h-10 border-2 border-white shadow-sm">
-                  <AvatarImage src={MOCK_USER.avatarUrl} />
-                  <AvatarFallback>A</AvatarFallback>
+                  <AvatarImage src={user?.avatarUrl} />
+                  <AvatarFallback>{user?.name?.[0] || 'A'}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-slate-900 truncate">
-                    {MOCK_USER.name}
+                    {user?.name || "Guest"}
                   </p>
                   <p className="text-xs text-slate-500 truncate">
-                    {MOCK_USER.email}
+                    {user?.email || "guest@example.com"}
                   </p>
                 </div>
                 <Settings className="w-4 h-4 text-slate-400" />
@@ -107,6 +151,7 @@ export default function Home() {
               <Button
                 variant="ghost"
                 className="w-full justify-start mt-4 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl"
+                onClick={() => setUser(null)}
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out
@@ -140,7 +185,7 @@ export default function Home() {
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-orange-50 rounded-full border border-orange-100">
                 <Flame className="w-4 h-4 text-orange-500 fill-current" />
                 <span className="text-sm font-bold text-orange-700">
-                  {MOCK_USER.respectPoints}
+                  {user?.respectPoints || 0}
                 </span>
               </div>
               <Button variant="ghost" size="icon" className="relative rounded-xl">
@@ -162,17 +207,20 @@ export default function Home() {
                 >
                   {currentView === "dashboard" && (
                     <Dashboard
+                      user={user!}
+                      goals={goals}
                       onSelectGoal={handleSelectGoal}
-                      onCreateGoal={() => undefined}
+                      onCreateGoal={() => setShowCreateGoal(true)}
                     />
                   )}
                   {currentView === "goal-detail" && selectedGoal && (
                     <GoalDetail
+                      user={user!}
                       goal={selectedGoal}
                       onBack={() => setCurrentView("dashboard")}
                     />
                   )}
-                  {currentView === "leaderboard" && <Leaderboard />}
+                  {currentView === "leaderboard" && <Leaderboard entries={leaderboard} />}
                   {currentView === "history" && (
                     <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400">
                       <History className="w-16 h-16 mb-4 opacity-20" />
@@ -189,8 +237,28 @@ export default function Home() {
 
         <StudyTimer
           goalTitle={selectedGoal?.title}
-          onComplete={(mins) => console.log(`Completed ${mins} mins`)}
+          onComplete={async (mins) => {
+            if (user?.id && selectedGoal?.id) {
+              await logStudySession({
+                durationSeconds: mins * 60,
+                startedAt: new Date(Date.now() - mins * 60000).toISOString(),
+                userId: user.id,
+                goalId: selectedGoal.id
+              }).catch(console.error);
+            }
+          }}
         />
+
+        {showCreateGoal && user && (
+          <CreateGoalModal 
+            user={user} 
+            onClose={() => setShowCreateGoal(false)} 
+            onCreated={() => {
+              setShowCreateGoal(false);
+              fetchMainData();
+            }}
+          />
+        )}
       </div>
     </TooltipProvider>
   );

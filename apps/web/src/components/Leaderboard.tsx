@@ -5,10 +5,12 @@ import { ArrowUp, Flame, Medal, Trophy } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { MOCK_LEADERBOARD } from "@/lib/mock-data";
+import { LeaderboardEntry } from "@/types";
 import { cn } from "@/lib/utils";
 
-export function Leaderboard() {
+export function Leaderboard({ entries = [] }: { entries: LeaderboardEntry[] }) {
+  const topThree = entries.slice(0, 3);
+  
   return (
     <div className="space-y-8 pb-20">
       <header>
@@ -17,9 +19,9 @@ export function Leaderboard() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-10">
-        <PodiumPlace entry={MOCK_LEADERBOARD[1]} rank={2} delay={0.2} height="h-48" color="bg-slate-200" icon={<Medal className="w-6 h-6 text-slate-500" />} />
-        <PodiumPlace entry={MOCK_LEADERBOARD[0]} rank={1} delay={0.1} height="h-64" color="bg-yellow-100" icon={<Trophy className="w-8 h-8 text-yellow-600" />} isWinner />
-        <PodiumPlace entry={MOCK_LEADERBOARD[2]} rank={3} delay={0.3} height="h-40" color="bg-orange-100" icon={<Medal className="w-6 h-6 text-orange-600" />} />
+        {topThree[1] && <PodiumPlace entry={topThree[1]} rank={2} delay={0.2} height="h-48" color="bg-slate-200" icon={<Medal className="w-6 h-6 text-slate-500" />} />}
+        {topThree[0] && <PodiumPlace entry={topThree[0]} rank={1} delay={0.1} height="h-64" color="bg-yellow-100" icon={<Trophy className="w-8 h-8 text-yellow-600" />} isWinner />}
+        {topThree[2] && <PodiumPlace entry={topThree[2]} rank={3} delay={0.3} height="h-40" color="bg-orange-100" icon={<Medal className="w-6 h-6 text-orange-600" />} />}
       </div>
 
       <Card className="glass-card border-none overflow-hidden">
@@ -33,7 +35,7 @@ export function Leaderboard() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {MOCK_LEADERBOARD.map((entry, i) => (
+          {entries.map((entry, i) => (
             <motion.div
               key={entry.userId}
               initial={{ opacity: 0, y: 10 }}
@@ -41,7 +43,7 @@ export function Leaderboard() {
               transition={{ delay: 0.5 + i * 0.05 }}
               className={cn(
                 "grid grid-cols-12 gap-4 p-4 items-center border-b border-slate-50 hover:bg-slate-50/50 transition-colors",
-                i === MOCK_LEADERBOARD.length - 1 && "border-none",
+                i === entries.length - 1 && "border-none",
               )}
             >
               <div className="col-span-1 text-center font-bold text-slate-400">{entry.rank}</div>
@@ -83,7 +85,7 @@ function PodiumPlace({
   icon,
   isWinner,
 }: {
-  entry: (typeof MOCK_LEADERBOARD)[number];
+  entry: LeaderboardEntry;
   rank: number;
   delay: number;
   height: string;

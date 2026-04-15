@@ -13,8 +13,8 @@ export class Chapter extends Document {
   @Prop({ type: Number, default: 0 })
   order: number;
 
-  @Prop({ type: Types.ObjectId, ref: 'Topic', required: true, index: true })
-  topicId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Section', required: true, index: true })
+  sectionId: Types.ObjectId;
 }
 
 export const ChapterSchema = SchemaFactory.createForClass(Chapter);

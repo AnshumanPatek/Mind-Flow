@@ -12,8 +12,8 @@ export class StudySession extends Document {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
   userId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Goal', required: true, index: true })
-  goalId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Goal', required: false, index: true })
+  goalId?: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Chapter', required: false, index: true })
   chapterId?: Types.ObjectId;

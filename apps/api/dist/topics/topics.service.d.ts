@@ -6,9 +6,10 @@ export declare class TopicsService {
     private readonly topicModel;
     constructor(topicModel: Model<Topic>);
     create(createTopicDto: CreateTopicDto): Promise<Topic>;
-    findByGoal(goalId: string): Promise<Topic[]>;
+    findByChapter(chapterId: string): Promise<Topic[]>;
     findById(id: string): Promise<Topic>;
     update(id: string, updateTopicDto: UpdateTopicDto): Promise<Topic>;
     remove(id: string): Promise<void>;
     removeByGoal(goalId: string): Promise<void>;
+    removeByChapter(chapterId: string): Promise<void>;
 }

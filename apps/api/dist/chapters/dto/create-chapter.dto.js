@@ -16,7 +16,7 @@ class CreateChapterDto {
     title;
     status;
     order;
-    topicId;
+    sectionId;
 }
 exports.CreateChapterDto = CreateChapterDto;
 __decorate([
@@ -38,5 +38,5 @@ __decorate([
     (0, class_validator_1.IsMongoId)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], CreateChapterDto.prototype, "topicId", void 0);
+], CreateChapterDto.prototype, "sectionId", void 0);
 //# sourceMappingURL=create-chapter.dto.js.map

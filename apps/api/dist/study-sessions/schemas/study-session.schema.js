@@ -33,7 +33,7 @@ __decorate([
     __metadata("design:type", mongoose_2.Types.ObjectId)
 ], StudySession.prototype, "userId", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'Goal', required: true, index: true }),
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'Goal', required: false, index: true }),
     __metadata("design:type", mongoose_2.Types.ObjectId)
 ], StudySession.prototype, "goalId", void 0);
 __decorate([

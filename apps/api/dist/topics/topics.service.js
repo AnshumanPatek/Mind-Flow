@@ -25,13 +25,13 @@ let TopicsService = class TopicsService {
     async create(createTopicDto) {
         const topic = new this.topicModel({
             ...createTopicDto,
-            goalId: new mongoose_2.Types.ObjectId(createTopicDto.goalId),
+            chapterId: new mongoose_2.Types.ObjectId(createTopicDto.chapterId),
         });
         return topic.save();
     }
-    async findByGoal(goalId) {
+    async findByChapter(chapterId) {
         return this.topicModel
-            .find({ goalId: new mongoose_2.Types.ObjectId(goalId) })
+            .find({ chapterId: new mongoose_2.Types.ObjectId(chapterId) })
             .sort({ order: 1, createdAt: 1 })
             .exec();
     }
@@ -59,6 +59,9 @@ let TopicsService = class TopicsService {
     }
     async removeByGoal(goalId) {
         await this.topicModel.deleteMany({ goalId: new mongoose_2.Types.ObjectId(goalId) }).exec();
+    }
+    async removeByChapter(chapterId) {
+        await this.topicModel.deleteMany({ chapterId: new mongoose_2.Types.ObjectId(chapterId) }).exec();
     }
 };
 exports.TopicsService = TopicsService;

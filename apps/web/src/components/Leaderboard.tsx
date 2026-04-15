@@ -5,10 +5,12 @@ import { ArrowUp, Flame, Medal, Trophy } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { MOCK_LEADERBOARD } from "@/lib/mock-data";
+import { LeaderboardEntry } from "@/types";
 import { cn } from "@/lib/utils";
 
-export function Leaderboard() {
+export function Leaderboard({ entries = [] }: { entries: LeaderboardEntry[] }) {
+  const topThree = entries.slice(0, 3);
+  
   return (
     <div className="space-y-8 pb-20">
       <header>
@@ -17,58 +19,70 @@ export function Leaderboard() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-10">
-        <PodiumPlace entry={MOCK_LEADERBOARD[1]} rank={2} delay={0.2} height="h-48" color="bg-slate-200" icon={<Medal className="w-6 h-6 text-slate-500" />} />
-        <PodiumPlace entry={MOCK_LEADERBOARD[0]} rank={1} delay={0.1} height="h-64" color="bg-yellow-100" icon={<Trophy className="w-8 h-8 text-yellow-600" />} isWinner />
-        <PodiumPlace entry={MOCK_LEADERBOARD[2]} rank={3} delay={0.3} height="h-40" color="bg-orange-100" icon={<Medal className="w-6 h-6 text-orange-600" />} />
+        {topThree[1] && <PodiumPlace entry={topThree[1]} rank={2} delay={0.2} height="h-48" color="bg-slate-200" icon={<Medal className="w-6 h-6 text-slate-500" />} />}
+        {topThree[0] && <PodiumPlace entry={topThree[0]} rank={1} delay={0.1} height="h-64" color="bg-yellow-100" icon={<Trophy className="w-8 h-8 text-yellow-600" />} isWinner />}
+        {topThree[2] && <PodiumPlace entry={topThree[2]} rank={3} delay={0.3} height="h-40" color="bg-orange-100" icon={<Medal className="w-6 h-6 text-orange-600" />} />}
       </div>
 
       <Card className="glass-card border-none overflow-hidden">
-        <CardHeader className="border-b border-slate-100 bg-white/50">
-          <div className="grid grid-cols-12 gap-4 text-xs font-bold text-slate-400 uppercase tracking-widest">
-            <div className="col-span-1 text-center">Rank</div>
-            <div className="col-span-5">Member</div>
-            <div className="col-span-2 text-center">Chapters</div>
-            <div className="col-span-2 text-center">Hours</div>
-            <div className="col-span-2 text-center">Respect</div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          {MOCK_LEADERBOARD.map((entry, i) => (
-            <motion.div
-              key={entry.userId}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 + i * 0.05 }}
-              className={cn(
-                "grid grid-cols-12 gap-4 p-4 items-center border-b border-slate-50 hover:bg-slate-50/50 transition-colors",
-                i === MOCK_LEADERBOARD.length - 1 && "border-none",
-              )}
-            >
-              <div className="col-span-1 text-center font-bold text-slate-400">{entry.rank}</div>
-              <div className="col-span-5 flex items-center gap-3">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src={entry.avatarUrl} />
-                  <AvatarFallback>{entry.userName[0]}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-bold text-slate-900">{entry.userName}</p>
-                  <div className="flex items-center gap-1 text-[10px] text-green-500 font-bold uppercase">
-                    <ArrowUp className="w-3 h-3" />
-                    <span>2 spots</span>
-                  </div>
-                </div>
-              </div>
-              <div className="col-span-2 text-center font-mono font-bold text-slate-700">{entry.chaptersCompleted}</div>
-              <div className="col-span-2 text-center font-mono font-bold text-slate-700">{entry.totalHours}h</div>
-              <div className="col-span-2 text-center">
-                <Badge className="bg-orange-50 text-orange-600 border-none font-bold">
-                  <Flame className="w-3 h-3 mr-1 fill-current" />
-                  {entry.respectPoints}
-                </Badge>
-              </div>
-            </motion.div>
-          ))}
-        </CardContent>
+        <div className="w-full">
+          <table className="w-full text-left">
+            <thead className="bg-white/50 border-b border-slate-100">
+              <tr className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                <th className="py-4 px-4 text-center w-20">Rank</th>
+                <th className="py-4 px-4">Member</th>
+                <th className="py-4 px-4 text-center w-32">Chapters</th>
+                <th className="py-4 px-4 text-center w-32">Hours</th>
+                <th className="py-4 px-4 text-center w-32">Respect</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry, i) => (
+                <motion.tr
+                  key={entry.userId}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 + i * 0.05 }}
+                  className={cn(
+                    "hover:bg-slate-50/50 transition-colors border-b border-slate-50",
+                    i === entries.length - 1 && "border-none",
+                  )}
+                >
+                  <td className="py-4 px-4 text-center font-bold text-slate-400">
+                    {entry.rank}
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10">
+                        <AvatarImage src={entry.avatarUrl} />
+                        <AvatarFallback>{entry.userName[0]}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-bold text-slate-900">{entry.userName}</p>
+                        <div className="flex items-center gap-1 text-[10px] text-green-500 font-bold uppercase mt-0.5">
+                          <ArrowUp className="w-3 h-3" />
+                          <span>2 spots</span>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-center font-mono font-bold text-slate-700">
+                    {entry.chaptersCompleted}
+                  </td>
+                  <td className="py-4 px-4 text-center font-mono font-bold text-slate-700">
+                    {entry.totalHours}h
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <Badge className="bg-orange-50 text-orange-600 border-none font-bold inline-flex">
+                      <Flame className="w-3 h-3 mr-1 fill-current" />
+                      {entry.respectPoints}
+                    </Badge>
+                  </td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
     </div>
   );
@@ -83,7 +97,7 @@ function PodiumPlace({
   icon,
   isWinner,
 }: {
-  entry: (typeof MOCK_LEADERBOARD)[number];
+  entry: LeaderboardEntry;
   rank: number;
   delay: number;
   height: string;

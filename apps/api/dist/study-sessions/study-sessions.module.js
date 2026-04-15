@@ -12,6 +12,7 @@ const mongoose_1 = require("@nestjs/mongoose");
 const study_session_schema_1 = require("./schemas/study-session.schema");
 const study_sessions_controller_1 = require("./study-sessions.controller");
 const study_sessions_service_1 = require("./study-sessions.service");
+const streaks_module_1 = require("../streaks/streaks.module");
 let StudySessionsModule = class StudySessionsModule {
 };
 exports.StudySessionsModule = StudySessionsModule;
@@ -19,6 +20,7 @@ exports.StudySessionsModule = StudySessionsModule = __decorate([
     (0, common_1.Module)({
         imports: [
             mongoose_1.MongooseModule.forFeature([{ name: study_session_schema_1.StudySession.name, schema: study_session_schema_1.StudySessionSchema }]),
+            streaks_module_1.StreaksModule,
         ],
         controllers: [study_sessions_controller_1.StudySessionsController],
         providers: [study_sessions_service_1.StudySessionsService],

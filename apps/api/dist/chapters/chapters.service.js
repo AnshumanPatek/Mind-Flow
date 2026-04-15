@@ -25,13 +25,13 @@ let ChaptersService = class ChaptersService {
     async create(createChapterDto) {
         const chapter = new this.chapterModel({
             ...createChapterDto,
-            topicId: new mongoose_2.Types.ObjectId(createChapterDto.topicId),
+            sectionId: new mongoose_2.Types.ObjectId(createChapterDto.sectionId),
         });
         return chapter.save();
     }
-    async findByTopic(topicId) {
+    async findBySection(sectionId) {
         return this.chapterModel
-            .find({ topicId: new mongoose_2.Types.ObjectId(topicId) })
+            .find({ sectionId: new mongoose_2.Types.ObjectId(sectionId) })
             .sort({ order: 1, createdAt: 1 })
             .exec();
     }
@@ -59,6 +59,9 @@ let ChaptersService = class ChaptersService {
     }
     async removeByTopic(topicId) {
         await this.chapterModel.deleteMany({ topicId: new mongoose_2.Types.ObjectId(topicId) }).exec();
+    }
+    async removeBySection(sectionId) {
+        await this.chapterModel.deleteMany({ sectionId: new mongoose_2.Types.ObjectId(sectionId) }).exec();
     }
 };
 exports.ChaptersService = ChaptersService;

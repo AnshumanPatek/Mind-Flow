@@ -14,11 +14,14 @@ const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const users_module_1 = require("./users/users.module");
 const goals_module_1 = require("./goals/goals.module");
+const sections_module_1 = require("./sections/sections.module");
 const topics_module_1 = require("./topics/topics.module");
 const chapters_module_1 = require("./chapters/chapters.module");
 const study_sessions_module_1 = require("./study-sessions/study-sessions.module");
 const reactions_module_1 = require("./reactions/reactions.module");
 const admin_module_1 = require("./admin/admin.module");
+const topic_progress_module_1 = require("./topic-progress/topic-progress.module");
+const streaks_module_1 = require("./streaks/streaks.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -38,11 +41,14 @@ exports.AppModule = AppModule = __decorate([
             }),
             users_module_1.UsersModule,
             goals_module_1.GoalsModule,
+            sections_module_1.SectionsModule,
             topics_module_1.TopicsModule,
             chapters_module_1.ChaptersModule,
             study_sessions_module_1.StudySessionsModule,
             reactions_module_1.ReactionsModule,
             admin_module_1.AdminModule,
+            topic_progress_module_1.TopicProgressModule,
+            streaks_module_1.StreaksModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

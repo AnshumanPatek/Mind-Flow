@@ -22,8 +22,8 @@ export class ChaptersController {
   }
 
   @Get()
-  findByTopic(@Query('topicId') topicId: string) {
-    return this.chaptersService.findByTopic(topicId);
+  findBySection(@Query('sectionId') sectionId: string) {
+    return this.chaptersService.findBySection(sectionId);
   }
 
   @Get(':id')

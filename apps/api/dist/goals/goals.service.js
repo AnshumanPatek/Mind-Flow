@@ -122,6 +122,42 @@ let GoalsService = class GoalsService {
             },
             {
                 $lookup: {
+                    from: 'topic_progress',
+                    let: { uId: '$userId', gId: '$goalId' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$userId', '$$uId'] },
+                                        { $eq: ['$goalId', '$$gId'] },
+                                        { $eq: ['$isCompleted', true] },
+                                    ],
+                                },
+                            },
+                        },
+                    ],
+                    as: 'completedTopics',
+                },
+            },
+            {
+                $lookup: {
+                    from: 'reactions',
+                    let: { uId: '$userId' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $eq: ['$receiverId', '$$uId'],
+                                },
+                            },
+                        },
+                    ],
+                    as: 'respectReceived',
+                },
+            },
+            {
+                $lookup: {
                     from: 'users',
                     localField: 'userId',
                     foreignField: '_id',
@@ -138,9 +174,11 @@ let GoalsService = class GoalsService {
                     avatar: '$user.avatar',
                     totalSeconds: { $sum: '$sessions.durationSeconds' },
                     sessionCount: { $size: '$sessions' },
+                    chaptersCompleted: { $size: '$completedTopics' },
+                    respectPoints: { $size: '$respectReceived' },
                 },
             },
-            { $sort: { totalSeconds: -1 } },
+            { $sort: { totalSeconds: -1, chaptersCompleted: -1, respectPoints: -1 } },
         ]);
     }
 };

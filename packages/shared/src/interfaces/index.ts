@@ -64,7 +64,7 @@ export interface IStudySession {
   durationSeconds: number;
   startedAt: Date;
   userId: string | IUser;
-  goalId: string;
+  goalId?: string | IGoal;
   chapterId?: string;
 }
 

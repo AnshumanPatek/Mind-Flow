@@ -25,8 +25,8 @@ let TopicsController = class TopicsController {
     create(createTopicDto) {
         return this.topicsService.create(createTopicDto);
     }
-    findByGoal(goalId) {
-        return this.topicsService.findByGoal(goalId);
+    findByChapter(chapterId) {
+        return this.topicsService.findByChapter(chapterId);
     }
     findOne(id) {
         return this.topicsService.findById(id);
@@ -48,11 +48,11 @@ __decorate([
 ], TopicsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
-    __param(0, (0, common_1.Query)('goalId')),
+    __param(0, (0, common_1.Query)('chapterId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], TopicsController.prototype, "findByGoal", null);
+], TopicsController.prototype, "findByChapter", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),

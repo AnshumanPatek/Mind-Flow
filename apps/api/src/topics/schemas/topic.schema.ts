@@ -12,8 +12,8 @@ export class Topic extends Document {
   @Prop({ type: Number, default: 0 })
   order: number;
 
-  @Prop({ type: Types.ObjectId, ref: 'Goal', required: true, index: true })
-  goalId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Chapter', required: true, index: true })
+  chapterId: Types.ObjectId;
 }
 
 export const TopicSchema = SchemaFactory.createForClass(Topic);

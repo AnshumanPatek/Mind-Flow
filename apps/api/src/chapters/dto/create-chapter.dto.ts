@@ -16,5 +16,5 @@ export class CreateChapterDto {
 
   @IsMongoId()
   @IsNotEmpty()
-  topicId: string;
+  sectionId: string;
 }

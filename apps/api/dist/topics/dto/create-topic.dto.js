@@ -15,7 +15,7 @@ class CreateTopicDto {
     title;
     description;
     order;
-    goalId;
+    chapterId;
 }
 exports.CreateTopicDto = CreateTopicDto;
 __decorate([
@@ -37,5 +37,5 @@ __decorate([
     (0, class_validator_1.IsMongoId)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], CreateTopicDto.prototype, "goalId", void 0);
+], CreateTopicDto.prototype, "chapterId", void 0);
 //# sourceMappingURL=create-topic.dto.js.map

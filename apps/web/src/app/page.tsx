@@ -3,14 +3,11 @@
 import React, { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  Bell,
   Flame,
   History,
   LayoutDashboard,
   LogOut,
   Menu,
-  Search,
-  Settings,
   Target,
   Trophy,
   X,
@@ -21,17 +18,54 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Dashboard } from "@/components/Dashboard";
 import { GoalDetail } from "@/components/GoalDetail";
 import { Leaderboard } from "@/components/Leaderboard";
+import { SessionHistory } from "@/components/SessionHistory";
 import { StudyTimer } from "@/components/StudyTimer";
-import { MOCK_GOALS, MOCK_USER } from "@/lib/mock-data";
+import { Login } from "@/components/Login";
+import { CreateGoalModal } from "@/components/CreateGoalModal";
 import { cn } from "@/lib/utils";
-import { Goal } from "@/types";
+import { Goal, LeaderboardEntry, User } from "@/types";
+import { getGoals, getLeaderboard, getUsers, logStudySession } from "@/lib/api";
 
-type View = "dashboard" | "goal-detail" | "leaderboard" | "history";
+type View = "dashboard" | "goal-detail" | "leaderboard" | "history" | "profile";
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<View>("dashboard");
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const [user, setUser] = useState<User | null>(null);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateGoal, setShowCreateGoal] = useState(false);
+  const [sessionHistoryRefreshKey, setSessionHistoryRefreshKey] = useState(0);
+
+  const fetchMainData = async () => {
+    try {
+      const [fetchedUsers, fetchedGoals] = await Promise.all([
+        getUsers(),
+        getGoals(),
+      ]);
+      setAllUsers(fetchedUsers || []);
+
+      const activeGoals = fetchedGoals || [];
+      setGoals(activeGoals);
+
+      if (activeGoals.length > 0) {
+        const fetchedLeaderboard = await getLeaderboard(activeGoals[0].id);
+        setLeaderboard(fetchedLeaderboard);
+      }
+    } catch (err) {
+      console.error("Failed to fetch data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchMainData();
+  }, []);
 
   const handleSelectGoal = (goal: Goal) => {
     setSelectedGoal(goal);
@@ -43,6 +77,14 @@ export default function Home() {
     { id: "leaderboard", label: "Leaderboard", icon: Trophy },
     { id: "history", label: "Session History", icon: History },
   ];
+
+  if (!user && !loading) {
+    return <Login availableUsers={allUsers} onLogin={(u) => setUser(u)} />;
+  }
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading MindFlow...</div>;
+  }
 
   return (
     <TooltipProvider>
@@ -89,24 +131,27 @@ export default function Home() {
             </nav>
 
             <div className="mt-auto pt-6 border-t border-slate-100">
-              <div className="flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-100 transition-colors cursor-pointer">
+              <div
+                className="flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-100 transition-colors cursor-pointer"
+                onClick={() => setCurrentView("profile")}
+              >
                 <Avatar className="w-10 h-10 border-2 border-white shadow-sm">
-                  <AvatarImage src={MOCK_USER.avatarUrl} />
-                  <AvatarFallback>A</AvatarFallback>
+                  <AvatarImage src={user?.avatarUrl} />
+                  <AvatarFallback>{user?.name?.[0] || "A"}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-slate-900 truncate">
-                    {MOCK_USER.name}
+                    {user?.name || "Guest"}
                   </p>
                   <p className="text-xs text-slate-500 truncate">
-                    {MOCK_USER.email}
+                    {user?.email || "guest@example.com"}
                   </p>
                 </div>
-                <Settings className="w-4 h-4 text-slate-400" />
               </div>
               <Button
                 variant="ghost"
                 className="w-full justify-start mt-4 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl"
+                onClick={() => setUser(null)}
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out
@@ -126,12 +171,25 @@ export default function Home() {
               >
                 {isSidebarOpen ? <X /> : <Menu />}
               </Button>
-              <div className="relative hidden md:block">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search goals, topics..."
-                  className="pl-10 pr-4 py-2 bg-slate-100/50 border-none rounded-xl text-sm focus:ring-2 focus:ring-brand-500 w-64 transition-all"
+              <div className="hidden md:block">
+                <StudyTimer
+                  goalTitle={selectedGoal?.title}
+                  onComplete={async (durationSeconds) => {
+                    if (!user?.id) return;
+
+                    try {
+                      await logStudySession({
+                        durationSeconds,
+                        startedAt: new Date(Date.now() - durationSeconds * 1000).toISOString(),
+                        userId: user.id,
+                        goalId: selectedGoal?.id,
+                      });
+                      setSessionHistoryRefreshKey((key) => key + 1);
+                    } catch (err) {
+                      console.error(err);
+                    }
+                  }}
+                  onNavigate={() => setCurrentView("history")}
                 />
               </div>
             </div>
@@ -140,13 +198,9 @@ export default function Home() {
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-orange-50 rounded-full border border-orange-100">
                 <Flame className="w-4 h-4 text-orange-500 fill-current" />
                 <span className="text-sm font-bold text-orange-700">
-                  {MOCK_USER.respectPoints}
+                  {user?.respectPoints || 0}
                 </span>
               </div>
-              <Button variant="ghost" size="icon" className="relative rounded-xl">
-                <Bell className="w-5 h-5 text-slate-500" />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-              </Button>
             </div>
           </header>
 
@@ -162,23 +216,64 @@ export default function Home() {
                 >
                   {currentView === "dashboard" && (
                     <Dashboard
+                      user={user!}
+                      goals={goals}
                       onSelectGoal={handleSelectGoal}
-                      onCreateGoal={() => undefined}
+                      onCreateGoal={() => setShowCreateGoal(true)}
                     />
                   )}
                   {currentView === "goal-detail" && selectedGoal && (
                     <GoalDetail
+                      user={user!}
                       goal={selectedGoal}
                       onBack={() => setCurrentView("dashboard")}
+                      onRefresh={async () => {
+                        // Fetch fresh data
+                        const [fetchedUsers, fetchedGoals] = await Promise.all([
+                          getUsers(),
+                          getGoals(),
+                        ]);
+                        setAllUsers(fetchedUsers || []);
+                        const activeGoals = fetchedGoals || [];
+                        setGoals(activeGoals);
+                        
+                        // Update the selected goal with fresh data
+                        const updatedGoal = activeGoals.find(g => g.id === selectedGoal.id);
+                        if (updatedGoal) {
+                          setSelectedGoal(updatedGoal);
+                        }
+                      }}
                     />
                   )}
-                  {currentView === "leaderboard" && <Leaderboard />}
-                  {currentView === "history" && (
-                    <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400">
-                      <History className="w-16 h-16 mb-4 opacity-20" />
-                      <p className="text-xl font-serif">
-                        Session history coming soon...
-                      </p>
+                  {currentView === "leaderboard" && <Leaderboard entries={leaderboard} />}
+                  {currentView === "history" && user && (
+                    <SessionHistory user={user} refreshKey={sessionHistoryRefreshKey} />
+                  )}
+                  {currentView === "profile" && user && (
+                    <div className="max-w-2xl mx-auto space-y-6">
+                      <div className="bg-white rounded-3xl p-8 border border-slate-200/50 shadow-sm flex flex-col items-center text-center">
+                        <Avatar className="w-32 h-32 border-4 border-white shadow-xl mb-4">
+                          <AvatarImage src={user.avatarUrl} />
+                          <AvatarFallback className="text-4xl">{user.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <h1 className="text-3xl font-serif font-bold text-slate-900">{user.name}</h1>
+                        <p className="text-slate-500 mb-6">{user.email}</p>
+
+                        <div className="grid grid-cols-3 gap-6 w-full pt-6 border-t border-slate-100">
+                          <div className="flex flex-col items-center">
+                            <span className="text-2xl font-bold text-slate-900">{user.totalHours || 0}h</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Time</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <span className="text-2xl font-bold text-slate-900">{user.chaptersCompleted || 0}</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Chapters</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <span className="text-2xl font-bold text-slate-900">{user.respectPoints || 0}</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Respect</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </motion.div>
@@ -187,10 +282,17 @@ export default function Home() {
           </div>
         </main>
 
-        <StudyTimer
-          goalTitle={selectedGoal?.title}
-          onComplete={(mins) => console.log(`Completed ${mins} mins`)}
-        />
+        {showCreateGoal && user && (
+          <CreateGoalModal
+            user={user}
+            isOpen={showCreateGoal}
+            onClose={() => setShowCreateGoal(false)}
+            onCreated={() => {
+              setShowCreateGoal(false);
+              fetchMainData();
+            }}
+          />
+        )}
       </div>
     </TooltipProvider>
   );

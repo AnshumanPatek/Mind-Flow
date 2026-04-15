@@ -17,20 +17,30 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const study_session_schema_1 = require("./schemas/study-session.schema");
+const streaks_service_1 = require("../streaks/streaks.service");
 let StudySessionsService = class StudySessionsService {
     sessionModel;
-    constructor(sessionModel) {
+    streaksService;
+    constructor(sessionModel, streaksService) {
         this.sessionModel = sessionModel;
+        this.streaksService = streaksService;
     }
     async create(dto) {
         const session = new this.sessionModel({
             durationSeconds: dto.durationSeconds,
             startedAt: new Date(dto.startedAt),
             userId: new mongoose_2.Types.ObjectId(dto.userId),
-            goalId: new mongoose_2.Types.ObjectId(dto.goalId),
+            ...(dto.goalId && { goalId: new mongoose_2.Types.ObjectId(dto.goalId) }),
             ...(dto.chapterId && { chapterId: new mongoose_2.Types.ObjectId(dto.chapterId) }),
         });
-        return session.save();
+        const savedSession = await session.save();
+        try {
+            await this.streaksService.updateStreak(dto.userId);
+        }
+        catch (error) {
+            console.error('Failed to update streak:', error);
+        }
+        return savedSession;
     }
     async findAll(query) {
         const filter = {};
@@ -43,6 +53,8 @@ let StudySessionsService = class StudySessionsService {
         return this.sessionModel
             .find(filter)
             .populate('userId', 'name email avatar')
+            .populate('goalId', 'title')
+            .populate('chapterId', 'title')
             .sort({ startedAt: -1 })
             .exec();
     }
@@ -50,6 +62,8 @@ let StudySessionsService = class StudySessionsService {
         const session = await this.sessionModel
             .findById(id)
             .populate('userId', 'name email avatar')
+            .populate('goalId', 'title')
+            .populate('chapterId', 'title')
             .exec();
         if (!session) {
             throw new common_1.NotFoundException(`Study session with ID "${id}" not found`);
@@ -86,6 +100,7 @@ exports.StudySessionsService = StudySessionsService;
 exports.StudySessionsService = StudySessionsService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(study_session_schema_1.StudySession.name)),
-    __metadata("design:paramtypes", [mongoose_2.Model])
+    __metadata("design:paramtypes", [mongoose_2.Model,
+        streaks_service_1.StreaksService])
 ], StudySessionsService);
 //# sourceMappingURL=study-sessions.service.js.map

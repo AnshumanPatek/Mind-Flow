@@ -3,13 +3,11 @@
 import React, { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  Bell,
   Flame,
   History,
   LayoutDashboard,
   LogOut,
   Menu,
-  Search,
   Settings,
   Target,
   Trophy,
@@ -29,7 +27,7 @@ import { Goal, User, LeaderboardEntry } from "@/types";
 import { getGoals, getUsers, getLeaderboard, logStudySession } from "@/lib/api";
 import { MOCK_USER } from "@/lib/mock-data";
 
-type View = "dashboard" | "goal-detail" | "leaderboard" | "history";
+type View = "dashboard" | "goal-detail" | "leaderboard" | "history" | "profile";
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<View>("dashboard");
@@ -133,7 +131,10 @@ export default function Home() {
             </nav>
 
             <div className="mt-auto pt-6 border-t border-slate-100">
-              <div className="flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-100 transition-colors cursor-pointer">
+              <div 
+                className="flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-100 transition-colors cursor-pointer"
+                onClick={() => setCurrentView("profile")}
+              >
                 <Avatar className="w-10 h-10 border-2 border-white shadow-sm">
                   <AvatarImage src={user?.avatarUrl} />
                   <AvatarFallback>{user?.name?.[0] || 'A'}</AvatarFallback>
@@ -146,7 +147,6 @@ export default function Home() {
                     {user?.email || "guest@example.com"}
                   </p>
                 </div>
-                <Settings className="w-4 h-4 text-slate-400" />
               </div>
               <Button
                 variant="ghost"
@@ -171,12 +171,20 @@ export default function Home() {
               >
                 {isSidebarOpen ? <X /> : <Menu />}
               </Button>
-              <div className="relative hidden md:block">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search goals, topics..."
-                  className="pl-10 pr-4 py-2 bg-slate-100/50 border-none rounded-xl text-sm focus:ring-2 focus:ring-brand-500 w-64 transition-all"
+              <div className="hidden md:block">
+                <StudyTimer 
+                  goalTitle={selectedGoal?.title}
+                  onComplete={async (mins) => {
+                    if (user?.id && selectedGoal?.id) {
+                      await logStudySession({
+                        durationSeconds: mins * 60,
+                        startedAt: new Date(Date.now() - mins * 60000).toISOString(),
+                        userId: user.id,
+                        goalId: selectedGoal.id
+                      }).catch(console.error);
+                    }
+                  }}
+                  onNavigate={() => setCurrentView("history")}
                 />
               </div>
             </div>
@@ -188,10 +196,6 @@ export default function Home() {
                   {user?.respectPoints || 0}
                 </span>
               </div>
-              <Button variant="ghost" size="icon" className="relative rounded-xl">
-                <Bell className="w-5 h-5 text-slate-500" />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-              </Button>
             </div>
           </header>
 
@@ -222,11 +226,39 @@ export default function Home() {
                   )}
                   {currentView === "leaderboard" && <Leaderboard entries={leaderboard} />}
                   {currentView === "history" && (
-                    <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400">
-                      <History className="w-16 h-16 mb-4 opacity-20" />
-                      <p className="text-xl font-serif">
-                        Session history coming soon...
+                    <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-slate-200/50 shadow-sm min-h-[60vh] text-slate-400">
+                      <History className="w-16 h-16 mb-4 text-brand-200" />
+                      <h2 className="text-2xl font-serif font-bold text-slate-900 mb-2">Session History</h2>
+                      <p className="text-lg text-slate-500 max-w-md text-center">
+                        You have not recorded any study sessions yet. Start the timer to log your focus time!
                       </p>
+                    </div>
+                  )}
+                  {currentView === "profile" && user && (
+                    <div className="max-w-2xl mx-auto space-y-6">
+                      <div className="bg-white rounded-3xl p-8 border border-slate-200/50 shadow-sm flex flex-col items-center text-center">
+                        <Avatar className="w-32 h-32 border-4 border-white shadow-xl mb-4">
+                          <AvatarImage src={user.avatarUrl} />
+                          <AvatarFallback className="text-4xl">{user.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <h1 className="text-3xl font-serif font-bold text-slate-900">{user.name}</h1>
+                        <p className="text-slate-500 mb-6">{user.email}</p>
+                        
+                        <div className="grid grid-cols-3 gap-6 w-full pt-6 border-t border-slate-100">
+                          <div className="flex flex-col items-center">
+                            <span className="text-2xl font-bold text-slate-900">{user.totalHours || 0}h</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Time</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <span className="text-2xl font-bold text-slate-900">{user.chaptersCompleted || 0}</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Chapters</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <span className="text-2xl font-bold text-slate-900">{user.respectPoints || 0}</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Respect</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </motion.div>
@@ -235,19 +267,7 @@ export default function Home() {
           </div>
         </main>
 
-        <StudyTimer
-          goalTitle={selectedGoal?.title}
-          onComplete={async (mins) => {
-            if (user?.id && selectedGoal?.id) {
-              await logStudySession({
-                durationSeconds: mins * 60,
-                startedAt: new Date(Date.now() - mins * 60000).toISOString(),
-                userId: user.id,
-                goalId: selectedGoal.id
-              }).catch(console.error);
-            }
-          }}
-        />
+
 
         {showCreateGoal && user && (
           <CreateGoalModal 

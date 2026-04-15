@@ -37,10 +37,10 @@ export function CreateGoalModal({ user, onClose, onCreated }: CreateGoalModalPro
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
       <div className="w-full max-w-lg bg-white rounded-3xl p-8 shadow-2xl">
-        <h2 className="text-2xl font-serif font-bold mb-6">Create New Goal</h2>
+        <h2 className="text-2xl font-serif font-bold mb-6">Create New Chapter</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-bold text-slate-500 mb-1 block">Goal Title</label>
+            <label className="text-sm font-bold text-slate-500 mb-1 block">Chapter Title</label>
             <input
               type="text"
               placeholder="e.g. Master Next.js"
@@ -74,7 +74,7 @@ export function CreateGoalModal({ user, onClose, onCreated }: CreateGoalModalPro
               Cancel
             </Button>
             <Button disabled={loading} type="submit" className="flex-1 bg-brand-600 hover:bg-brand-700 text-white rounded-xl py-6">
-              {loading ? "Creating..." : "Create Goal"}
+              {loading ? "Creating..." : "Create Chapter"}
             </Button>
           </div>
         </form>

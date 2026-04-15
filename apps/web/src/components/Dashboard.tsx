@@ -34,13 +34,13 @@ export function Dashboard({ user, goals, onSelectGoal, onCreateGoal }: Dashboard
             Welcome back, {user?.name || "Guest"}
           </motion.h1>
           <motion.p initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }} className="text-slate-500 mt-2">
-            You have {goals.length} active goals with your friends.
+            You have {goals.length} active chapters with your friends.
           </motion.p>
         </div>
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2 }}>
           <Button onClick={onCreateGoal} className="bg-brand-600 hover:bg-brand-700 text-white rounded-2xl px-6 py-6 h-auto text-lg shadow-lg shadow-brand-200">
             <Plus className="w-5 h-5 mr-2" />
-            New Goal
+            New Chapter
           </Button>
         </motion.div>
       </header>
@@ -69,10 +69,7 @@ export function Dashboard({ user, goals, onSelectGoal, onCreateGoal }: Dashboard
 
       <section className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-serif font-bold text-slate-900">Active Goals</h2>
-          <Button variant="ghost" className="text-brand-600 hover:text-brand-700 hover:bg-brand-50">
-            View All <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
+          <h2 className="text-2xl font-serif font-bold text-slate-900">Active Chapters</h2>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

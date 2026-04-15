@@ -130,6 +130,34 @@ export async function createGoal(data: { title: string; description: string; adm
   });
 }
 
+export async function addGoalMember(goalId: string, userId: string, role: string = "USER"): Promise<any> {
+  return fetchJson(`${API_BASE}/goals/${goalId}/members`, {
+    method: "POST",
+    body: JSON.stringify({ userId, role }),
+  });
+}
+
+export async function toggleTopicProgress(topicId: string, userId: string, goalId: string): Promise<any> {
+  return fetchJson(`${API_BASE}/topic-progress/toggle`, {
+    method: "POST",
+    body: JSON.stringify({ topicId, userId, goalId }),
+  });
+}
+
+export async function getTopicProgress(goalId: string, userId: string): Promise<any[]> {
+  return fetchJson(`${API_BASE}/topic-progress?goalId=${goalId}&userId=${userId}`);
+}
+
+export async function getStreak(userId: string): Promise<any> {
+  return fetchJson(`${API_BASE}/streaks/${userId}`);
+}
+
+export async function updateStreak(userId: string): Promise<any> {
+  return fetchJson(`${API_BASE}/streaks/update/${userId}`, {
+    method: "POST",
+  });
+}
+
 export async function getLeaderboard(goalId: string): Promise<LeaderboardEntry[]> {
   const raw = await fetchJson<any[]>(`${API_BASE}/goals/${goalId}/leaderboard`);
   return raw.map((r, i) => ({

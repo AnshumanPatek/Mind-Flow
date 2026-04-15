@@ -11,6 +11,8 @@ import { ChaptersModule } from './chapters/chapters.module';
 import { StudySessionsModule } from './study-sessions/study-sessions.module';
 import { ReactionsModule } from './reactions/reactions.module';
 import { AdminModule } from './admin/admin.module';
+import { TopicProgressModule } from './topic-progress/topic-progress.module';
+import { StreaksModule } from './streaks/streaks.module';
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { AdminModule } from './admin/admin.module';
     StudySessionsModule,
     ReactionsModule,
     AdminModule,
+    TopicProgressModule,
+    StreaksModule,
   ],
   controllers: [AppController],
   providers: [AppService],

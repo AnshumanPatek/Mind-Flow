@@ -227,6 +227,22 @@ export default function Home() {
                       user={user!}
                       goal={selectedGoal}
                       onBack={() => setCurrentView("dashboard")}
+                      onRefresh={async () => {
+                        // Fetch fresh data
+                        const [fetchedUsers, fetchedGoals] = await Promise.all([
+                          getUsers(),
+                          getGoals(),
+                        ]);
+                        setAllUsers(fetchedUsers || []);
+                        const activeGoals = fetchedGoals || [];
+                        setGoals(activeGoals);
+                        
+                        // Update the selected goal with fresh data
+                        const updatedGoal = activeGoals.find(g => g.id === selectedGoal.id);
+                        if (updatedGoal) {
+                          setSelectedGoal(updatedGoal);
+                        }
+                      }}
                     />
                   )}
                   {currentView === "leaderboard" && <Leaderboard entries={leaderboard} />}

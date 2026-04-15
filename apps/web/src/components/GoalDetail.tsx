@@ -1,16 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   CheckCircle2,
   ChevronLeft,
   Circle,
   Flame,
   MessageSquare,
-  MoreVertical,
   Plus,
-  Settings,
-  Share2,
   Target,
   Trophy,
   Video,
@@ -27,21 +24,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Goal, Section, Chapter, User } from "@/types";
 import { cn } from "@/lib/utils";
-import { giveReaction, updateChapterStatus, createSection, createChapter, createTopic } from "@/lib/api";
+import { giveReaction, updateChapterStatus, createSection, createChapter, createTopic, addGoalMember, getUsers, toggleTopicProgress, getTopicProgress } from "@/lib/api";
 
 interface GoalDetailProps {
   user: User;
   goal: Goal;
   onBack: () => void;
+  onRefresh: () => void;
 }
 
-export function GoalDetail({ user, goal, onBack }: GoalDetailProps) {
-  const [completedChapters, setCompletedChapters] = useState<Set<string>>(new Set());
+export function GoalDetail({ user, goal, onBack, onRefresh }: GoalDetailProps) {
+  const [completedTopics, setCompletedTopics] = useState<Set<string>>(new Set());
   
   // Dialog states
   const [sectionDialogOpen, setSectionDialogOpen] = useState(false);
   const [chapterDialogOpen, setChapterDialogOpen] = useState(false);
   const [topicDialogOpen, setTopicDialogOpen] = useState(false);
+  const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
   
   // Form states
   const [sectionTitle, setSectionTitle] = useState("");
@@ -58,16 +57,50 @@ export function GoalDetail({ user, goal, onBack }: GoalDetailProps) {
   const [currentTopicsCount, setCurrentTopicsCount] = useState(0);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Add member states
+  const [availableUsers, setAvailableUsers] = useState<User[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState("");
+
+  // Fetch available users when component mounts
+  React.useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const users = await getUsers();
+        // Filter out users who are already members
+        const memberIds = goal.members.map(m => m.userId);
+        const nonMembers = users.filter(u => !memberIds.includes(u.id));
+        setAvailableUsers(nonMembers);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+      }
+    };
+    fetchUsers();
+  }, [goal.members]);
+
+  // Fetch topic progress when component mounts
+  React.useEffect(() => {
+    const fetchProgress = async () => {
+      try {
+        const progress = await getTopicProgress(goal.id, user.id);
+        const completedIds = progress.map((p: any) => p.topicId);
+        setCompletedTopics(new Set(completedIds));
+      } catch (error) {
+        console.error("Failed to fetch progress:", error);
+      }
+    };
+    fetchProgress();
+  }, [goal.id, user.id]);
 
   const toggleChapter = async (chapterId: string) => {
-    const isCompleted = completedChapters.has(chapterId);
+    const isCompleted = completedTopics.has(chapterId);
     const newStatus = isCompleted ? "PENDING" : "COMPLETED";
     
     // Update local state optimistic UI
-    const newSet = new Set(completedChapters);
+    const newSet = new Set(completedTopics);
     if (isCompleted) newSet.delete(chapterId);
     else newSet.add(chapterId);
-    setCompletedChapters(newSet);
+    setCompletedTopics(newSet);
 
     // Call API
     await updateChapterStatus(chapterId, newStatus).catch(console.error);
@@ -90,7 +123,7 @@ export function GoalDetail({ user, goal, onBack }: GoalDetailProps) {
       setSectionDialogOpen(false);
       setSectionTitle("");
       setSectionDescription("");
-      window.location.reload();
+      onRefresh();
     } catch (error) {
       console.error(error);
     } finally {
@@ -117,7 +150,7 @@ export function GoalDetail({ user, goal, onBack }: GoalDetailProps) {
       setChapterDialogOpen(false);
       setChapterTitle("");
       setChapterDescription("");
-      window.location.reload();
+      onRefresh();
     } catch (error) {
       console.error(error);
     } finally {
@@ -144,7 +177,22 @@ export function GoalDetail({ user, goal, onBack }: GoalDetailProps) {
       setTopicDialogOpen(false);
       setTopicTitle("");
       setTopicDescription("");
-      window.location.reload();
+      onRefresh();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAddMember = async () => {
+    if (!selectedUserId) return;
+    setIsSubmitting(true);
+    try {
+      await addGoalMember(goal.id, selectedUserId, "USER");
+      setAddMemberDialogOpen(false);
+      setSelectedUserId("");
+      onRefresh();
     } catch (error) {
       console.error(error);
     } finally {
@@ -153,7 +201,14 @@ export function GoalDetail({ user, goal, onBack }: GoalDetailProps) {
   };
 
   const totalChapters = goal.sections.reduce((acc, s) => acc + s.chapters.length, 0);
-  const progressPercent = Math.round((completedChapters.size / totalChapters) * 100);
+  const totalTopics = goal.sections.reduce((acc, s) => 
+    acc + s.chapters.reduce((chAcc, ch) => chAcc + ch.topics.length, 0), 0
+  );
+  const progressPercent = totalTopics > 0 ? Math.round((completedTopics.size / totalTopics) * 100) : 0;
+
+  // Find the goal creator/admin
+  const goalAdmin = goal.members.find(m => m.role === 'admin') || goal.members[0];
+  const leaderName = goalAdmin?.user?.name || user.name;
 
   return (
     <div className="space-y-8 pb-24">
@@ -162,10 +217,6 @@ export function GoalDetail({ user, goal, onBack }: GoalDetailProps) {
           <ChevronLeft className="w-5 h-5 mr-1" />
           Back to Dashboard
         </Button>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="rounded-xl border-slate-200"><Share2 className="w-4 h-4" /></Button>
-          <Button variant="outline" size="icon" className="rounded-xl border-slate-200"><Settings className="w-4 h-4" /></Button>
-        </div>
       </div>
 
       <section className="relative overflow-hidden rounded-3xl glass-card border-none p-8 md:p-12">
@@ -198,11 +249,11 @@ export function GoalDetail({ user, goal, onBack }: GoalDetailProps) {
           <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Leader</p>
-              <p className="font-bold text-slate-900">Mike</p>
+              <p className="font-bold text-slate-900">{leaderName}</p>
             </div>
             <Avatar className="w-12 h-12 border-2 border-brand-100">
-              <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=Mike" />
-              <AvatarFallback>M</AvatarFallback>
+              <AvatarImage src={goalAdmin?.user?.avatarUrl || user.avatarUrl} />
+              <AvatarFallback>{leaderName[0]}</AvatarFallback>
             </Avatar>
           </div>
         </div>
@@ -236,7 +287,25 @@ export function GoalDetail({ user, goal, onBack }: GoalDetailProps) {
                         </div>
                         <div className="space-y-1 ml-2">
                           {chapter.topics.map((topic) => (
-                            <TopicItem key={topic.id} topic={topic} />
+                            <TopicItem 
+                              key={topic.id} 
+                              topic={topic}
+                              isCompleted={completedTopics.has(topic.id)}
+                              onToggle={async () => {
+                                try {
+                                  await toggleTopicProgress(topic.id, user.id, goal.id);
+                                  const newSet = new Set(completedTopics);
+                                  if (completedTopics.has(topic.id)) {
+                                    newSet.delete(topic.id);
+                                  } else {
+                                    newSet.add(topic.id);
+                                  }
+                                  setCompletedTopics(newSet);
+                                } catch (error) {
+                                  console.error("Failed to toggle progress:", error);
+                                }
+                              }}
+                            />
                           ))}
                           <Button 
                             variant="ghost" 
@@ -267,7 +336,14 @@ export function GoalDetail({ user, goal, onBack }: GoalDetailProps) {
           <section className="glass-card rounded-3xl p-6 space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="font-serif font-bold text-xl">Study Group</h3>
-              <Button variant="ghost" size="icon" className="rounded-full"><Plus className="w-4 h-4" /></Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="rounded-full hover:bg-brand-50"
+                onClick={() => setAddMemberDialogOpen(true)}
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
             </div>
             <div className="space-y-4">
               {goal.members.map((member) => (
@@ -478,21 +554,71 @@ export function GoalDetail({ user, goal, onBack }: GoalDetailProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Member Dialog */}
+      <Dialog open={addMemberDialogOpen} onOpenChange={setAddMemberDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-serif">Add Member</DialogTitle>
+            <DialogDescription className="text-slate-500">
+              Invite someone to join this study goal
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="user-select" className="text-slate-700">Select User *</Label>
+              {availableUsers.length > 0 ? (
+                <select
+                  id="user-select"
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                  className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                >
+                  <option value="">Select a user...</option>
+                  {availableUsers.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name} ({u.email})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <p className="text-sm text-slate-500 py-2">All users are already members of this goal.</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setAddMemberDialogOpen(false)}
+              className="rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAddMember}
+              disabled={!selectedUserId || isSubmitting}
+              className="bg-brand-600 hover:bg-brand-700 text-white rounded-xl"
+            >
+              {isSubmitting ? "Adding..." : "Add Member"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
 interface TopicItemProps {
   topic: { id: string; title: string; description?: string };
+  isCompleted: boolean;
+  onToggle: () => void;
 }
 
-function TopicItem({ topic }: TopicItemProps) {
-  const [isCompleted, setIsCompleted] = useState(false);
-
+function TopicItem({ topic, isCompleted, onToggle }: TopicItemProps) {
   return (
     <div className={cn("flex items-center gap-2 p-2 rounded-lg transition-all group", isCompleted ? "bg-brand-50/30" : "hover:bg-slate-50")}>
       <button 
-        onClick={() => setIsCompleted(!isCompleted)} 
+        onClick={onToggle} 
         className={cn("transition-colors flex-shrink-0", isCompleted ? "text-brand-600" : "text-slate-300 group-hover:text-slate-400")}
       >
         {isCompleted ? <CheckCircle2 className="w-5 h-5 fill-brand-50" /> : <Circle className="w-5 h-5" />}

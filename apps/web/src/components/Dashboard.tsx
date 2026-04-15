@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { motion } from "motion/react";
 import {
   ChevronRight,
@@ -8,6 +9,7 @@ import {
   Flame,
   Plus,
   Target,
+  Trophy,
   Users,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,6 +28,59 @@ interface DashboardProps {
 }
 
 export function Dashboard({ user, goals, onSelectGoal, onCreateGoal }: DashboardProps) {
+  const [goalProgress, setGoalProgress] = React.useState<Record<string, number>>({});
+  const [streak, setStreak] = React.useState<any>(null);
+
+  // Fetch progress for all goals
+  React.useEffect(() => {
+    const fetchAllProgress = async () => {
+      const progressMap: Record<string, number> = {};
+      
+      for (const goal of goals) {
+        try {
+          const progress = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/topic-progress?goalId=${goal.id}&userId=${user.id}`
+          ).then(res => res.json());
+          
+          const totalTopics = goal.sections.reduce((acc, s) => 
+            acc + s.chapters.reduce((chAcc, ch) => chAcc + ch.topics.length, 0), 0
+          );
+          
+          const completedCount = progress.length;
+          const percent = totalTopics > 0 ? Math.round((completedCount / totalTopics) * 100) : 0;
+          progressMap[goal.id] = percent;
+        } catch (error) {
+          console.error(`Failed to fetch progress for goal ${goal.id}:`, error);
+          progressMap[goal.id] = 0;
+        }
+      }
+      
+      setGoalProgress(progressMap);
+    };
+
+    if (user && goals.length > 0) {
+      fetchAllProgress();
+    }
+  }, [goals, user]);
+
+  // Fetch user's streak
+  React.useEffect(() => {
+    const fetchStreak = async () => {
+      try {
+        const streakData = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/streaks/${user.id}`
+        ).then(res => res.json());
+        setStreak(streakData);
+      } catch (error) {
+        console.error("Failed to fetch streak:", error);
+      }
+    };
+
+    if (user) {
+      fetchStreak();
+    }
+  }, [user]);
+
   return (
     <div className="space-y-8 pb-20">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -45,11 +100,12 @@ export function Dashboard({ user, goals, onSelectGoal, onCreateGoal }: Dashboard
         </motion.div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
           { label: "Total Study Time", value: `${user?.totalHours || 0}h`, icon: Clock, color: "text-blue-500", bg: "bg-blue-50" },
-          { label: "Chapters Done", value: user?.chaptersCompleted || 0, icon: Target, color: "text-brand-500", bg: "bg-brand-50" },
+          { label: "Topics Done", value: user?.chaptersCompleted || 0, icon: Target, color: "text-brand-500", bg: "bg-brand-50" },
           { label: "Respect Earned", value: user?.respectPoints || 0, icon: Flame, color: "text-orange-500", bg: "bg-orange-50" },
+          { label: "Current Streak", value: `${streak?.currentStreak || 0} days`, icon: Trophy, color: "text-yellow-500", bg: "bg-yellow-50" },
         ].map((stat, i) => (
           <motion.div key={stat.label} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 + i * 0.1 }}>
             <Card className="glass-card border-none">
@@ -73,7 +129,10 @@ export function Dashboard({ user, goals, onSelectGoal, onCreateGoal }: Dashboard
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {goals.map((goal, i) => (
+          {goals.map((goal, i) => {
+            const goalProgressPercent = goalProgress[goal.id] || 0;
+            
+            return (
             <motion.div key={goal.id} initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.5 + i * 0.1 }} whileHover={{ y: -4 }} onClick={() => onSelectGoal(goal)} className="cursor-pointer">
               <Card className="glass-card border-none h-full overflow-hidden group">
                 <CardHeader className="pb-4">
@@ -104,9 +163,9 @@ export function Dashboard({ user, goals, onSelectGoal, onCreateGoal }: Dashboard
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm font-medium">
                       <span className="text-slate-500">Progress</span>
-                      <span className="text-brand-600">65%</span>
+                      <span className="text-brand-600">{goalProgressPercent}%</span>
                     </div>
-                    <Progress value={65} className="h-2 bg-slate-100" />
+                    <Progress value={goalProgressPercent} className="h-2 bg-slate-100" />
                   </div>
 
                   <div className="flex items-center justify-between pt-2">
@@ -129,7 +188,8 @@ export function Dashboard({ user, goals, onSelectGoal, onCreateGoal }: Dashboard
                 </CardContent>
               </Card>
             </motion.div>
-          ))}
+          );
+          })}
         </div>
       </section>
     </div>

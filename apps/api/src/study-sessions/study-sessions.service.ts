@@ -4,11 +4,13 @@ import { Model, Types, FilterQuery } from 'mongoose';
 import { StudySession } from './schemas/study-session.schema';
 import { CreateStudySessionDto } from './dto/create-study-session.dto';
 import { QueryStudySessionDto } from './dto/query-study-session.dto';
+import { StreaksService } from '../streaks/streaks.service';
 
 @Injectable()
 export class StudySessionsService {
   constructor(
     @InjectModel(StudySession.name) private readonly sessionModel: Model<StudySession>,
+    private readonly streaksService: StreaksService,
   ) {}
 
   async create(dto: CreateStudySessionDto): Promise<StudySession> {
@@ -19,7 +21,18 @@ export class StudySessionsService {
       ...(dto.goalId && { goalId: new Types.ObjectId(dto.goalId) }),
       ...(dto.chapterId && { chapterId: new Types.ObjectId(dto.chapterId) }),
     });
-    return session.save();
+    
+    const savedSession = await session.save();
+    
+    // Update user's streak
+    try {
+      await this.streaksService.updateStreak(dto.userId);
+    } catch (error) {
+      console.error('Failed to update streak:', error);
+      // Don't fail the session creation if streak update fails
+    }
+    
+    return savedSession;
   }
 
   async findAll(query: QueryStudySessionDto): Promise<StudySession[]> {

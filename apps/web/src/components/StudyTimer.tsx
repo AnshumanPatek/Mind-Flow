@@ -2,14 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { Maximize2, Minimize2, Pause, Play, Square, Timer, X } from "lucide-react";
+import { Maximize2, Minimize2, Pause, Play, Square, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 interface StudyTimerProps {
   goalTitle?: string;
-  onComplete?: (durationMinutes: number) => void;
+  onComplete?: (durationSeconds: number) => void;
   onNavigate?: () => void;
 }
 
@@ -47,7 +47,7 @@ export function StudyTimer({ goalTitle, onComplete, onNavigate }: StudyTimerProp
   };
 
   const handleStop = () => {
-    if (time > 0 && onComplete) onComplete(Math.ceil(time / 60));
+    if (time > 0 && onComplete) onComplete(time);
     setIsActive(false);
     setIsPaused(false);
     setTime(0);

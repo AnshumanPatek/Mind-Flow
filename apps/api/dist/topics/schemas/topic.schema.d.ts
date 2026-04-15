@@ -3,7 +3,7 @@ export declare class Topic extends Document {
     title: string;
     description: string;
     order: number;
-    goalId: Types.ObjectId;
+    chapterId: Types.ObjectId;
 }
 export declare const TopicSchema: import("mongoose").Schema<Topic, import("mongoose").Model<Topic, any, any, any, Document<unknown, any, Topic, any, {}> & Topic & Required<{
     _id: Types.ObjectId;

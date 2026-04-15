@@ -34,13 +34,13 @@ export function Dashboard({ user, goals, onSelectGoal, onCreateGoal }: Dashboard
             Welcome back, {user?.name || "Guest"}
           </motion.h1>
           <motion.p initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }} className="text-slate-500 mt-2">
-            You have {goals.length} active chapters with your friends.
+            You have {goals.length} active goals with your friends.
           </motion.p>
         </div>
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2 }}>
           <Button onClick={onCreateGoal} className="bg-brand-600 hover:bg-brand-700 text-white rounded-2xl px-6 py-6 h-auto text-lg shadow-lg shadow-brand-200">
             <Plus className="w-5 h-5 mr-2" />
-            New Chapter
+            New Goal
           </Button>
         </motion.div>
       </header>
@@ -79,7 +79,7 @@ export function Dashboard({ user, goals, onSelectGoal, onCreateGoal }: Dashboard
                 <CardHeader className="pb-4">
                   <div className="flex justify-between items-start mb-2">
                     <Badge variant="secondary" className="bg-brand-50 text-brand-700 border-none px-3 py-1">
-                      {goal.topics.length} Topics
+                      {goal.sections.length} Sections
                     </Badge>
                     {goal.virtualRoomUrl && (
                       <Button

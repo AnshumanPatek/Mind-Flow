@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  Settings,
   Target,
   Trophy,
   X,
@@ -19,13 +18,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Dashboard } from "@/components/Dashboard";
 import { GoalDetail } from "@/components/GoalDetail";
 import { Leaderboard } from "@/components/Leaderboard";
+import { SessionHistory } from "@/components/SessionHistory";
 import { StudyTimer } from "@/components/StudyTimer";
 import { Login } from "@/components/Login";
 import { CreateGoalModal } from "@/components/CreateGoalModal";
 import { cn } from "@/lib/utils";
-import { Goal, User, LeaderboardEntry } from "@/types";
-import { getGoals, getUsers, getLeaderboard, logStudySession } from "@/lib/api";
-import { MOCK_USER } from "@/lib/mock-data";
+import { Goal, LeaderboardEntry, User } from "@/types";
+import { getGoals, getLeaderboard, getUsers, logStudySession } from "@/lib/api";
 
 type View = "dashboard" | "goal-detail" | "leaderboard" | "history" | "profile";
 
@@ -33,25 +32,26 @@ export default function Home() {
   const [currentView, setCurrentView] = useState<View>("dashboard");
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  
+
   const [user, setUser] = useState<User | null>(null);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateGoal, setShowCreateGoal] = useState(false);
+  const [sessionHistoryRefreshKey, setSessionHistoryRefreshKey] = useState(0);
 
   const fetchMainData = async () => {
     try {
       const [fetchedUsers, fetchedGoals] = await Promise.all([
         getUsers(),
-        getGoals()
+        getGoals(),
       ]);
       setAllUsers(fetchedUsers || []);
-      
-      let activeGoals = fetchedGoals || [];
+
+      const activeGoals = fetchedGoals || [];
       setGoals(activeGoals);
-      
+
       if (activeGoals.length > 0) {
         const fetchedLeaderboard = await getLeaderboard(activeGoals[0].id);
         setLeaderboard(fetchedLeaderboard);
@@ -131,13 +131,13 @@ export default function Home() {
             </nav>
 
             <div className="mt-auto pt-6 border-t border-slate-100">
-              <div 
+              <div
                 className="flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-100 transition-colors cursor-pointer"
                 onClick={() => setCurrentView("profile")}
               >
                 <Avatar className="w-10 h-10 border-2 border-white shadow-sm">
                   <AvatarImage src={user?.avatarUrl} />
-                  <AvatarFallback>{user?.name?.[0] || 'A'}</AvatarFallback>
+                  <AvatarFallback>{user?.name?.[0] || "A"}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-slate-900 truncate">
@@ -172,16 +172,21 @@ export default function Home() {
                 {isSidebarOpen ? <X /> : <Menu />}
               </Button>
               <div className="hidden md:block">
-                <StudyTimer 
+                <StudyTimer
                   goalTitle={selectedGoal?.title}
-                  onComplete={async (mins) => {
-                    if (user?.id && selectedGoal?.id) {
+                  onComplete={async (durationSeconds) => {
+                    if (!user?.id) return;
+
+                    try {
                       await logStudySession({
-                        durationSeconds: mins * 60,
-                        startedAt: new Date(Date.now() - mins * 60000).toISOString(),
+                        durationSeconds,
+                        startedAt: new Date(Date.now() - durationSeconds * 1000).toISOString(),
                         userId: user.id,
-                        goalId: selectedGoal.id
-                      }).catch(console.error);
+                        goalId: selectedGoal?.id,
+                      });
+                      setSessionHistoryRefreshKey((key) => key + 1);
+                    } catch (err) {
+                      console.error(err);
                     }
                   }}
                   onNavigate={() => setCurrentView("history")}
@@ -225,14 +230,8 @@ export default function Home() {
                     />
                   )}
                   {currentView === "leaderboard" && <Leaderboard entries={leaderboard} />}
-                  {currentView === "history" && (
-                    <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-slate-200/50 shadow-sm min-h-[60vh] text-slate-400">
-                      <History className="w-16 h-16 mb-4 text-brand-200" />
-                      <h2 className="text-2xl font-serif font-bold text-slate-900 mb-2">Session History</h2>
-                      <p className="text-lg text-slate-500 max-w-md text-center">
-                        You have not recorded any study sessions yet. Start the timer to log your focus time!
-                      </p>
-                    </div>
+                  {currentView === "history" && user && (
+                    <SessionHistory user={user} refreshKey={sessionHistoryRefreshKey} />
                   )}
                   {currentView === "profile" && user && (
                     <div className="max-w-2xl mx-auto space-y-6">
@@ -243,7 +242,7 @@ export default function Home() {
                         </Avatar>
                         <h1 className="text-3xl font-serif font-bold text-slate-900">{user.name}</h1>
                         <p className="text-slate-500 mb-6">{user.email}</p>
-                        
+
                         <div className="grid grid-cols-3 gap-6 w-full pt-6 border-t border-slate-100">
                           <div className="flex flex-col items-center">
                             <span className="text-2xl font-bold text-slate-900">{user.totalHours || 0}h</span>
@@ -267,12 +266,11 @@ export default function Home() {
           </div>
         </main>
 
-
-
         {showCreateGoal && user && (
-          <CreateGoalModal 
-            user={user} 
-            onClose={() => setShowCreateGoal(false)} 
+          <CreateGoalModal
+            user={user}
+            isOpen={showCreateGoal}
+            onClose={() => setShowCreateGoal(false)}
             onCreated={() => {
               setShowCreateGoal(false);
               fetchMainData();

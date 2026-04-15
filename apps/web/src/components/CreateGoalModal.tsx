@@ -1,15 +1,20 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { User } from "@/types";
 import { createGoal } from "@/lib/api";
 
 interface CreateGoalModalProps {
   user: User;
+  isOpen: boolean;
   onClose: () => void;
   onCreated: () => void;
 }
 
-export function CreateGoalModal({ user, onClose, onCreated }: CreateGoalModalProps) {
+export function CreateGoalModal({ user, isOpen, onClose, onCreated }: CreateGoalModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [roomUrl, setRoomUrl] = useState("");
@@ -26,6 +31,9 @@ export function CreateGoalModal({ user, onClose, onCreated }: CreateGoalModalPro
         adminId: user.id,
         virtualRoomUrl: roomUrl || undefined,
       });
+      setTitle("");
+      setDescription("");
+      setRoomUrl("");
       onCreated();
     } catch (err) {
       console.error(err);
@@ -35,50 +43,69 @@ export function CreateGoalModal({ user, onClose, onCreated }: CreateGoalModalPro
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className="w-full max-w-lg bg-white rounded-3xl p-8 shadow-2xl">
-        <h2 className="text-2xl font-serif font-bold mb-6">Create New Chapter</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-sm font-bold text-slate-500 mb-1 block">Chapter Title</label>
-            <input
-              type="text"
-              placeholder="e.g. Master Next.js"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 outline-none"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-serif">Create New Goal</DialogTitle>
+          <DialogDescription className="text-slate-500">
+            Set up a new study goal to track your progress and collaborate with others
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="goal-title" className="text-slate-700">Goal Title *</Label>
+              <Input
+                id="goal-title"
+                type="text"
+                placeholder="e.g., Master Next.js, UGC-NET Preparation"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                className="border-slate-200"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="goal-description" className="text-slate-700">Description</Label>
+              <Textarea
+                id="goal-description"
+                placeholder="What are we trying to achieve?"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="border-slate-200 min-h-[100px]"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="room-url" className="text-slate-700">Virtual Room URL (Optional)</Label>
+              <Input
+                id="room-url"
+                type="url"
+                placeholder="e.g., https://meet.google.com/xyz"
+                value={roomUrl}
+                onChange={(e) => setRoomUrl(e.target.value)}
+                className="border-slate-200"
+              />
+            </div>
           </div>
-          <div>
-            <label className="text-sm font-bold text-slate-500 mb-1 block">Description</label>
-            <textarea
-              placeholder="What are we trying to achieve?"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 outline-none min-h-[100px]"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="text-sm font-bold text-slate-500 mb-1 block">Virtual Room URL (Optional)</label>
-            <input
-              type="url"
-              placeholder="e.g. https://meet.google.com/xyz"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 outline-none"
-              value={roomUrl}
-              onChange={(e) => setRoomUrl(e.target.value)}
-            />
-          </div>
-          <div className="flex gap-4 pt-4">
-            <Button type="button" variant="ghost" onClick={onClose} className="flex-1 rounded-xl py-6">
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              className="rounded-xl"
+            >
               Cancel
             </Button>
-            <Button disabled={loading} type="submit" className="flex-1 bg-brand-600 hover:bg-brand-700 text-white rounded-xl py-6">
-              {loading ? "Creating..." : "Create Chapter"}
+            <Button 
+              type="submit"
+              disabled={loading || !title.trim()}
+              className="bg-brand-600 hover:bg-brand-700 text-white rounded-xl"
+            >
+              {loading ? "Creating..." : "Create Goal"}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

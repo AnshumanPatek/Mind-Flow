@@ -22,8 +22,8 @@ export class TopicsController {
   }
 
   @Get()
-  findByGoal(@Query('goalId') goalId: string) {
-    return this.topicsService.findByGoal(goalId);
+  findByChapter(@Query('chapterId') chapterId: string) {
+    return this.topicsService.findByChapter(chapterId);
   }
 
   @Get(':id')

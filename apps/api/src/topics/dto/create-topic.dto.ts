@@ -15,5 +15,5 @@ export class CreateTopicDto {
 
   @IsMongoId()
   @IsNotEmpty()
-  goalId: string;
+  chapterId: string;
 }

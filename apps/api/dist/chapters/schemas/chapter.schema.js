@@ -17,7 +17,7 @@ let Chapter = class Chapter extends mongoose_2.Document {
     title;
     status;
     order;
-    topicId;
+    sectionId;
 };
 exports.Chapter = Chapter;
 __decorate([
@@ -33,9 +33,9 @@ __decorate([
     __metadata("design:type", Number)
 ], Chapter.prototype, "order", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'Topic', required: true, index: true }),
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'Section', required: true, index: true }),
     __metadata("design:type", mongoose_2.Types.ObjectId)
-], Chapter.prototype, "topicId", void 0);
+], Chapter.prototype, "sectionId", void 0);
 exports.Chapter = Chapter = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true, collection: 'chapters' })
 ], Chapter);

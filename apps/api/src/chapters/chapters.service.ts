@@ -12,14 +12,14 @@ export class ChaptersService {
   async create(createChapterDto: CreateChapterDto): Promise<Chapter> {
     const chapter = new this.chapterModel({
       ...createChapterDto,
-      topicId: new Types.ObjectId(createChapterDto.topicId),
+      sectionId: new Types.ObjectId(createChapterDto.sectionId),
     });
     return chapter.save();
   }
 
-  async findByTopic(topicId: string): Promise<Chapter[]> {
+  async findBySection(sectionId: string): Promise<Chapter[]> {
     return this.chapterModel
-      .find({ topicId: new Types.ObjectId(topicId) })
+      .find({ sectionId: new Types.ObjectId(sectionId) })
       .sort({ order: 1, createdAt: 1 })
       .exec();
   }
@@ -51,5 +51,9 @@ export class ChaptersService {
 
   async removeByTopic(topicId: string): Promise<void> {
     await this.chapterModel.deleteMany({ topicId: new Types.ObjectId(topicId) }).exec();
+  }
+
+  async removeBySection(sectionId: string): Promise<void> {
+    await this.chapterModel.deleteMany({ sectionId: new Types.ObjectId(sectionId) }).exec();
   }
 }

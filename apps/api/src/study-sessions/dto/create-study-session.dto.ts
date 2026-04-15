@@ -13,9 +13,9 @@ export class CreateStudySessionDto {
   @IsNotEmpty()
   userId: string;
 
+  @IsOptional()
   @IsMongoId()
-  @IsNotEmpty()
-  goalId: string;
+  goalId?: string;
 
   @IsOptional()
   @IsMongoId()

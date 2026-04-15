@@ -16,7 +16,7 @@ let Topic = class Topic extends mongoose_2.Document {
     title;
     description;
     order;
-    goalId;
+    chapterId;
 };
 exports.Topic = Topic;
 __decorate([
@@ -32,9 +32,9 @@ __decorate([
     __metadata("design:type", Number)
 ], Topic.prototype, "order", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'Goal', required: true, index: true }),
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'Chapter', required: true, index: true }),
     __metadata("design:type", mongoose_2.Types.ObjectId)
-], Topic.prototype, "goalId", void 0);
+], Topic.prototype, "chapterId", void 0);
 exports.Topic = Topic = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true, collection: 'topics' })
 ], Topic);

@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { GoalsModule } from './goals/goals.module';
+import { SectionsModule } from './sections/sections.module';
 import { TopicsModule } from './topics/topics.module';
 import { ChaptersModule } from './chapters/chapters.module';
 import { StudySessionsModule } from './study-sessions/study-sessions.module';
@@ -31,6 +32,7 @@ import { AdminModule } from './admin/admin.module';
     // Feature modules
     UsersModule,
     GoalsModule,
+    SectionsModule,
     TopicsModule,
     ChaptersModule,
     StudySessionsModule,

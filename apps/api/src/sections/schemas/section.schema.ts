@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-@Schema({ timestamps: true, collection: 'topics' })
-export class Topic extends Document {
+@Schema({ timestamps: true, collection: 'sections' })
+export class Section extends Document {
   @Prop({ required: true, trim: true })
   title: string;
 
@@ -12,8 +12,8 @@ export class Topic extends Document {
   @Prop({ type: Number, default: 0 })
   order: number;
 
-  @Prop({ type: Types.ObjectId, ref: 'Chapter', required: true, index: true })
-  chapterId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Goal', required: true, index: true })
+  goalId: Types.ObjectId;
 }
 
-export const TopicSchema = SchemaFactory.createForClass(Topic);
+export const SectionSchema = SchemaFactory.createForClass(Section);

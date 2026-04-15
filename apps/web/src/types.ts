@@ -16,7 +16,7 @@ export interface Goal {
   description: string;
   ownerId: string;
   members: GoalMembership[];
-  topics: Topic[];
+  sections: Section[];
   virtualRoomUrl?: string;
   createdAt: string;
   updatedAt: string;
@@ -29,7 +29,7 @@ export interface GoalMembership {
   user: User;
 }
 
-export interface Topic {
+export interface Section {
   id: string;
   goalId: string;
   title: string;
@@ -40,11 +40,20 @@ export interface Topic {
 
 export interface Chapter {
   id: string;
-  topicId: string;
+  sectionId: string;
+  title: string;
+  description?: string;
+  topics: Topic[];
+  order: number;
+  status?: string;
+}
+
+export interface Topic {
+  id: string;
+  chapterId: string;
   title: string;
   description?: string;
   order: number;
-  progress: ChapterProgress[];
 }
 
 export interface ChapterProgress {
@@ -66,7 +75,12 @@ export interface RespectReaction {
 export interface StudySession {
   id: string;
   userId: string;
-  goalId: string;
+  goalId?: string;
+  goalTitle?: string;
+  chapterId?: string;
+  chapterTitle?: string;
+  startedAt: string;
+  durationSeconds: number;
   startTime: string;
   endTime: string;
   durationMinutes: number;

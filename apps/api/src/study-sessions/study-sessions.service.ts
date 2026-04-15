@@ -16,7 +16,7 @@ export class StudySessionsService {
       durationSeconds: dto.durationSeconds,
       startedAt: new Date(dto.startedAt),
       userId: new Types.ObjectId(dto.userId),
-      goalId: new Types.ObjectId(dto.goalId),
+      ...(dto.goalId && { goalId: new Types.ObjectId(dto.goalId) }),
       ...(dto.chapterId && { chapterId: new Types.ObjectId(dto.chapterId) }),
     });
     return session.save();
@@ -32,6 +32,8 @@ export class StudySessionsService {
     return this.sessionModel
       .find(filter)
       .populate('userId', 'name email avatar')
+      .populate('goalId', 'title')
+      .populate('chapterId', 'title')
       .sort({ startedAt: -1 })
       .exec();
   }
@@ -40,6 +42,8 @@ export class StudySessionsService {
     const session = await this.sessionModel
       .findById(id)
       .populate('userId', 'name email avatar')
+      .populate('goalId', 'title')
+      .populate('chapterId', 'title')
       .exec();
     if (!session) {
       throw new NotFoundException(`Study session with ID "${id}" not found`);

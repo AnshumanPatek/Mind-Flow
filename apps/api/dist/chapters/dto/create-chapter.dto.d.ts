@@ -3,5 +3,5 @@ export declare class CreateChapterDto {
     title: string;
     status?: ChapterStatus;
     order?: number;
-    topicId: string;
+    sectionId: string;
 }

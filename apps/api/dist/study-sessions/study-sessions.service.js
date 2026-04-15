@@ -27,7 +27,7 @@ let StudySessionsService = class StudySessionsService {
             durationSeconds: dto.durationSeconds,
             startedAt: new Date(dto.startedAt),
             userId: new mongoose_2.Types.ObjectId(dto.userId),
-            goalId: new mongoose_2.Types.ObjectId(dto.goalId),
+            ...(dto.goalId && { goalId: new mongoose_2.Types.ObjectId(dto.goalId) }),
             ...(dto.chapterId && { chapterId: new mongoose_2.Types.ObjectId(dto.chapterId) }),
         });
         return session.save();
@@ -43,6 +43,8 @@ let StudySessionsService = class StudySessionsService {
         return this.sessionModel
             .find(filter)
             .populate('userId', 'name email avatar')
+            .populate('goalId', 'title')
+            .populate('chapterId', 'title')
             .sort({ startedAt: -1 })
             .exec();
     }
@@ -50,6 +52,8 @@ let StudySessionsService = class StudySessionsService {
         const session = await this.sessionModel
             .findById(id)
             .populate('userId', 'name email avatar')
+            .populate('goalId', 'title')
+            .populate('chapterId', 'title')
             .exec();
         if (!session) {
             throw new common_1.NotFoundException(`Study session with ID "${id}" not found`);

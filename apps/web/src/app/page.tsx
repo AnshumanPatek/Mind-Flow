@@ -24,7 +24,7 @@ import { Login } from "@/components/Login";
 import { CreateGoalModal } from "@/components/CreateGoalModal";
 import { cn } from "@/lib/utils";
 import { Goal, LeaderboardEntry, User } from "@/types";
-import { getGoals, getLeaderboard, getUsers, logStudySession } from "@/lib/api";
+import { getGoals, getLeaderboard, getUsers, logStudySession, getUserStats } from "@/lib/api";
 
 type View = "dashboard" | "goal-detail" | "leaderboard" | "history" | "profile";
 
@@ -79,7 +79,15 @@ export default function Home() {
   ];
 
   if (!user && !loading) {
-    return <Login availableUsers={allUsers} onLogin={(u) => setUser(u)} />;
+    return <Login availableUsers={allUsers} onLogin={async (u) => {
+      try {
+        const stats = await getUserStats(u.id);
+        setUser({ ...u, ...stats });
+      } catch (error) {
+        console.error("Failed to fetch user stats:", error);
+        setUser(u);
+      }
+    }} />;
   }
 
   if (loading) {
@@ -195,6 +203,12 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-4">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-yellow-50 rounded-full border border-yellow-100">
+                <Trophy className="w-4 h-4 text-yellow-600 fill-current" />
+                <span className="text-sm font-bold text-yellow-700">
+                  {user?.streak || 0} day streak
+                </span>
+              </div>
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-orange-50 rounded-full border border-orange-100">
                 <Flame className="w-4 h-4 text-orange-500 fill-current" />
                 <span className="text-sm font-bold text-orange-700">

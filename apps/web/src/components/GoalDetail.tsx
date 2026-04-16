@@ -10,6 +10,7 @@ import {
   Plus,
   Target,
   Trophy,
+  UserX,
   Video,
 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -24,7 +25,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Goal, Section, Chapter, User } from "@/types";
 import { cn } from "@/lib/utils";
-import { giveReaction, updateChapterStatus, createSection, createChapter, createTopic, addGoalMember, getUsers, toggleTopicProgress, getTopicProgress } from "@/lib/api";
+import { giveReaction, updateChapterStatus, createSection, createChapter, createTopic, addGoalMember, removeGoalMember, getUsers, toggleTopicProgress, getTopicProgress } from "@/lib/api";
+import { DoubtsForum } from "@/components/DoubtsForum";
 
 interface GoalDetailProps {
   user: User;
@@ -33,7 +35,10 @@ interface GoalDetailProps {
   onRefresh: () => void;
 }
 
+type TabView = "curriculum" | "doubts";
+
 export function GoalDetail({ user, goal, onBack, onRefresh }: GoalDetailProps) {
+  const [currentTab, setCurrentTab] = useState<TabView>("curriculum");
   const [completedTopics, setCompletedTopics] = useState<Set<string>>(new Set());
   
   // Dialog states
@@ -41,6 +46,8 @@ export function GoalDetail({ user, goal, onBack, onRefresh }: GoalDetailProps) {
   const [chapterDialogOpen, setChapterDialogOpen] = useState(false);
   const [topicDialogOpen, setTopicDialogOpen] = useState(false);
   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
+  const [removeMemberDialogOpen, setRemoveMemberDialogOpen] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<{ userId: string; name: string } | null>(null);
   
   // Form states
   const [sectionTitle, setSectionTitle] = useState("");
@@ -200,6 +207,21 @@ export function GoalDetail({ user, goal, onBack, onRefresh }: GoalDetailProps) {
     }
   };
 
+  const handleRemoveMember = async () => {
+    if (!memberToRemove) return;
+    setIsSubmitting(true);
+    try {
+      await removeGoalMember(goal.id, memberToRemove.userId);
+      setRemoveMemberDialogOpen(false);
+      setMemberToRemove(null);
+      onRefresh();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const totalChapters = goal.sections.reduce((acc, s) => acc + s.chapters.length, 0);
   const totalTopics = goal.sections.reduce((acc, s) => 
     acc + s.chapters.reduce((chAcc, ch) => chAcc + ch.topics.length, 0), 0
@@ -259,6 +281,33 @@ export function GoalDetail({ user, goal, onBack, onRefresh }: GoalDetailProps) {
         </div>
       </section>
 
+      {/* Tab Navigation */}
+      <div className="flex gap-2 border-b border-slate-200">
+        <button
+          onClick={() => setCurrentTab("curriculum")}
+          className={cn(
+            "px-6 py-3 font-bold text-sm transition-colors border-b-2",
+            currentTab === "curriculum"
+              ? "border-brand-600 text-brand-600"
+              : "border-transparent text-slate-400 hover:text-slate-600"
+          )}
+        >
+          Curriculum
+        </button>
+        <button
+          onClick={() => setCurrentTab("doubts")}
+          className={cn(
+            "px-6 py-3 font-bold text-sm transition-colors border-b-2",
+            currentTab === "doubts"
+              ? "border-brand-600 text-brand-600"
+              : "border-transparent text-slate-400 hover:text-slate-600"
+          )}
+        >
+          Doubts & Questions
+        </button>
+      </div>
+
+      {currentTab === "curriculum" && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className="flex justify-between items-center">
@@ -358,38 +407,60 @@ export function GoalDetail({ user, goal, onBack, onRefresh }: GoalDetailProps) {
                       <p className="text-xs text-slate-400 capitalize">{member.role}</p>
                     </div>
                   </div>
-                  {member.userId === user?.id ? (
-                    <Badge className="bg-brand-50 text-brand-600 border-none">You</Badge>
-                  ) : (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-orange-400 hover:text-orange-500 hover:bg-orange-50"
-                            onClick={async () => {
-                              try {
-                                // Get first section's first chapter's first topic if available
-                                const firstSection = goal.sections[0];
-                                const firstChapter = firstSection?.chapters[0];
-                                const firstTopic = firstChapter?.topics[0];
-                                await giveReaction({
-                                  type: "🔥",
-                                  chapterId: firstChapter?.id || "default",
-                                  giverId: user.id,
-                                  receiverId: member.userId
-                                });
-                              } catch(e) { console.error(e) }
-                            }}
-                          >
-                            <Flame className="w-4 h-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Give Respect</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {member.userId === user?.id ? (
+                      <Badge className="bg-brand-50 text-brand-600 border-none">You</Badge>
+                    ) : (
+                      <>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-orange-400 hover:text-orange-500 hover:bg-orange-50"
+                                onClick={async () => {
+                                  try {
+                                    const firstSection = goal.sections[0];
+                                    const firstChapter = firstSection?.chapters[0];
+                                    await giveReaction({
+                                      type: "🔥",
+                                      chapterId: firstChapter?.id || "default",
+                                      giverId: user.id,
+                                      receiverId: member.userId
+                                    });
+                                  } catch(e) { console.error(e) }
+                                }}
+                              >
+                                <Flame className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Give Respect</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        {goalAdmin?.userId === user?.id && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 text-red-400 hover:text-red-500 hover:bg-red-50"
+                                  onClick={() => {
+                                    setMemberToRemove({ userId: member.userId, name: member.user.name });
+                                    setRemoveMemberDialogOpen(true);
+                                  }}
+                                >
+                                  <UserX className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Remove Member</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -404,6 +475,11 @@ export function GoalDetail({ user, goal, onBack, onRefresh }: GoalDetailProps) {
           </section>
         </div>
       </div>
+      )}
+
+      {currentTab === "doubts" && (
+        <DoubtsForum user={user} goalId={goal.id} isAdmin={goalAdmin?.userId === user?.id} />
+      )}
 
       {/* Add Section Dialog */}
       <Dialog open={sectionDialogOpen} onOpenChange={setSectionDialogOpen}>
@@ -600,6 +676,37 @@ export function GoalDetail({ user, goal, onBack, onRefresh }: GoalDetailProps) {
               className="bg-brand-600 hover:bg-brand-700 text-white rounded-xl"
             >
               {isSubmitting ? "Adding..." : "Add Member"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Remove Member Dialog */}
+      <Dialog open={removeMemberDialogOpen} onOpenChange={setRemoveMemberDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-serif">Remove Member</DialogTitle>
+            <DialogDescription className="text-slate-500">
+              Are you sure you want to remove {memberToRemove?.name} from this goal?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setRemoveMemberDialogOpen(false);
+                setMemberToRemove(null);
+              }}
+              className="rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleRemoveMember}
+              disabled={isSubmitting}
+              className="bg-red-600 hover:bg-red-700 text-white rounded-xl"
+            >
+              {isSubmitting ? "Removing..." : "Remove Member"}
             </Button>
           </DialogFooter>
         </DialogContent>

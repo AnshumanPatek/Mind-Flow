@@ -8,6 +8,7 @@ export interface User {
   totalHours: number;
   chaptersCompleted: number;
   respectPoints: number;
+  streak?: number;
 }
 
 export interface Goal {

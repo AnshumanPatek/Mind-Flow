@@ -13,6 +13,7 @@ import { ReactionsModule } from './reactions/reactions.module';
 import { AdminModule } from './admin/admin.module';
 import { TopicProgressModule } from './topic-progress/topic-progress.module';
 import { StreaksModule } from './streaks/streaks.module';
+import { DoubtsModule } from './doubts/doubts.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { StreaksModule } from './streaks/streaks.module';
     AdminModule,
     TopicProgressModule,
     StreaksModule,
+    DoubtsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

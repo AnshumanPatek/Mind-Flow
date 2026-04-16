@@ -22,6 +22,7 @@ const reactions_module_1 = require("./reactions/reactions.module");
 const admin_module_1 = require("./admin/admin.module");
 const topic_progress_module_1 = require("./topic-progress/topic-progress.module");
 const streaks_module_1 = require("./streaks/streaks.module");
+const doubts_module_1 = require("./doubts/doubts.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -49,6 +50,7 @@ exports.AppModule = AppModule = __decorate([
             admin_module_1.AdminModule,
             topic_progress_module_1.TopicProgressModule,
             streaks_module_1.StreaksModule,
+            doubts_module_1.DoubtsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

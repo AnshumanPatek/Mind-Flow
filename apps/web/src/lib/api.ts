@@ -35,6 +35,10 @@ export async function createUser(data: { email: string; name: string; avatar?: s
   return mapUser(res);
 }
 
+export async function getUserStats(userId: string): Promise<any> {
+  return fetchJson(`${API_BASE}/users/${userId}/stats`);
+}
+
 /** GOALS */
 export async function getGoals(userId?: string): Promise<Goal[]> {
   const url = userId ? `${API_BASE}/goals?userId=${userId}` : `${API_BASE}/goals`;
@@ -137,6 +141,12 @@ export async function addGoalMember(goalId: string, userId: string, role: string
   });
 }
 
+export async function removeGoalMember(goalId: string, userId: string): Promise<any> {
+  return fetchJson(`${API_BASE}/goals/${goalId}/members/${userId}`, {
+    method: "DELETE",
+  });
+}
+
 export async function toggleTopicProgress(topicId: string, userId: string, goalId: string): Promise<any> {
   return fetchJson(`${API_BASE}/topic-progress/toggle`, {
     method: "POST",
@@ -165,8 +175,8 @@ export async function getLeaderboard(goalId: string): Promise<LeaderboardEntry[]
     userName: r.name,
     avatarUrl: r.avatar,
     totalHours: r.totalSeconds ? r.totalSeconds / 3600 : 0,
-    chaptersCompleted: 0,
-    respectPoints: 0,
+    chaptersCompleted: r.chaptersCompleted || 0,
+    respectPoints: r.respectPoints || 0,
     rank: i + 1,
   }));
 }
@@ -280,4 +290,35 @@ export async function getAdminGoals() {
 }
 export async function getAdminActivity() {
   return fetchJson<any[]>(`${API_BASE}/admin/activity?limit=20`);
+}
+
+/** DOUBTS */
+export async function createDoubt(data: { title: string; description: string; goalId: string; userId: string }) {
+  return fetchJson(`${API_BASE}/doubts`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getDoubts(goalId: string): Promise<any[]> {
+  return fetchJson(`${API_BASE}/doubts?goalId=${goalId}`);
+}
+
+export async function addDoubtReply(doubtId: string, data: { userId: string; message: string }) {
+  return fetchJson(`${API_BASE}/doubts/${doubtId}/reply`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function resolveDoubt(doubtId: string) {
+  return fetchJson(`${API_BASE}/doubts/${doubtId}/resolve`, {
+    method: "PATCH",
+  });
+}
+
+export async function deleteDoubt(doubtId: string) {
+  return fetchJson(`${API_BASE}/doubts/${doubtId}`, {
+    method: "DELETE",
+  });
 }

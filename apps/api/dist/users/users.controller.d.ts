@@ -10,4 +10,5 @@ export declare class UsersController {
     update(id: string, updateUserDto: UpdateUserDto): Promise<import("./schemas/user.schema").User>;
     heartbeat(id: string): Promise<import("./schemas/user.schema").User>;
     remove(id: string): Promise<void>;
+    getUserStats(id: string): Promise<any>;
 }

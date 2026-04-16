@@ -18,12 +18,24 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const user_schema_1 = require("./schemas/user.schema");
+const study_session_schema_1 = require("../study-sessions/schemas/study-session.schema");
+const topic_progress_schema_1 = require("../topic-progress/schemas/topic-progress.schema");
+const reaction_schema_1 = require("../reactions/schemas/reaction.schema");
+const streak_schema_1 = require("../streaks/schemas/streak.schema");
 let UsersService = class UsersService {
     static { UsersService_1 = this; }
     userModel;
+    studySessionModel;
+    topicProgressModel;
+    reactionModel;
+    streakModel;
     static ONLINE_THRESHOLD_MS = 60_000;
-    constructor(userModel) {
+    constructor(userModel, studySessionModel, topicProgressModel, reactionModel, streakModel) {
         this.userModel = userModel;
+        this.studySessionModel = studySessionModel;
+        this.topicProgressModel = topicProgressModel;
+        this.reactionModel = reactionModel;
+        this.streakModel = streakModel;
     }
     async create(createUserDto) {
         const user = new this.userModel(createUserDto);
@@ -41,6 +53,13 @@ let UsersService = class UsersService {
     }
     async findByEmail(email) {
         return this.userModel.findOne({ email }).exec();
+    }
+    async findOrCreateByEmail(email, name, avatar) {
+        let user = await this.findByEmail(email);
+        if (!user) {
+            user = await this.create({ email, name, avatar });
+        }
+        return user;
     }
     async update(id, updateUserDto) {
         const user = await this.userModel
@@ -78,11 +97,40 @@ let UsersService = class UsersService {
             .exec();
         return users.map((u) => u._id.toString());
     }
+    async getUserStats(userId) {
+        const userObjectId = new mongoose_2.Types.ObjectId(userId);
+        const sessions = await this.studySessionModel.aggregate([
+            { $match: { userId: userObjectId } },
+            { $group: { _id: null, totalSeconds: { $sum: '$durationSeconds' } } },
+        ]);
+        const completedTopics = await this.topicProgressModel.countDocuments({
+            userId: userObjectId,
+            isCompleted: true,
+        });
+        const respect = await this.reactionModel.countDocuments({
+            receiverId: userObjectId,
+        });
+        const streak = await this.streakModel.findOne({ userId: userObjectId });
+        return {
+            totalHours: Math.round((sessions[0]?.totalSeconds || 0) / 3600),
+            chaptersCompleted: completedTopics,
+            respectPoints: respect,
+            streak: streak?.currentStreak || 0,
+        };
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = UsersService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(user_schema_1.User.name)),
-    __metadata("design:paramtypes", [mongoose_2.Model])
+    __param(1, (0, mongoose_1.InjectModel)(study_session_schema_1.StudySession.name)),
+    __param(2, (0, mongoose_1.InjectModel)(topic_progress_schema_1.TopicProgress.name)),
+    __param(3, (0, mongoose_1.InjectModel)(reaction_schema_1.Reaction.name)),
+    __param(4, (0, mongoose_1.InjectModel)(streak_schema_1.Streak.name)),
+    __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
+        mongoose_2.Model,
+        mongoose_2.Model,
+        mongoose_2.Model])
 ], UsersService);
 //# sourceMappingURL=users.service.js.map

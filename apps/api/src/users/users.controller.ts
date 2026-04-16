@@ -44,4 +44,9 @@ export class UsersController {
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
+
+  @Get(':id/stats')
+  getUserStats(@Param('id') id: string) {
+    return this.usersService.getUserStats(id);
+  }
 }

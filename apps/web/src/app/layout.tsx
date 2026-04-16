@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Playfair_Display } from "next/font/google";
+import { ClerkProvider } from '@clerk/nextjs';
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -17,10 +18,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${playfair.variable} ${jetbrains.variable}`}>
-        {children}
-      </body>
-    </html>
+    <ClerkProvider
+      appearance={{
+        variables: {
+          colorPrimary: '#6366f1', // brand-600 color
+        },
+      }}
+    >
+      <html lang="en">
+        <body className={`${inter.variable} ${playfair.variable} ${jetbrains.variable}`}>
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

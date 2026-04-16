@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useUser, useClerk } from "@clerk/nextjs";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Flame,
@@ -20,15 +21,17 @@ import { GoalDetail } from "@/components/GoalDetail";
 import { Leaderboard } from "@/components/Leaderboard";
 import { SessionHistory } from "@/components/SessionHistory";
 import { StudyTimer } from "@/components/StudyTimer";
-import { Login } from "@/components/Login";
 import { CreateGoalModal } from "@/components/CreateGoalModal";
 import { cn } from "@/lib/utils";
 import { Goal, LeaderboardEntry, User } from "@/types";
-import { getGoals, getLeaderboard, getUsers, logStudySession, getUserStats } from "@/lib/api";
+import { getGoals, getLeaderboard, getUsers, logStudySession, getUserStats, createUser } from "@/lib/api";
 
 type View = "dashboard" | "goal-detail" | "leaderboard" | "history" | "profile";
 
 export default function Home() {
+  const { isLoaded: clerkLoaded, isSignedIn, user: clerkUser } = useUser();
+  const { signOut } = useClerk();
+  
   const [currentView, setCurrentView] = useState<View>("dashboard");
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -41,7 +44,47 @@ export default function Home() {
   const [showCreateGoal, setShowCreateGoal] = useState(false);
   const [sessionHistoryRefreshKey, setSessionHistoryRefreshKey] = useState(0);
 
-  const fetchMainData = async () => {
+  // Sync Clerk user with database
+  React.useEffect(() => {
+    const syncUser = async () => {
+      if (!clerkLoaded || !isSignedIn || !clerkUser) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const email = clerkUser.emailAddresses[0]?.emailAddress;
+        if (!email) return;
+
+        // Check if user exists in database
+        const users = await getUsers();
+        let dbUser = users.find(u => u.email === email);
+
+        if (!dbUser) {
+          // Create new user in database
+          dbUser = await createUser({
+            email,
+            name: clerkUser.fullName || clerkUser.firstName || 'User',
+            avatar: clerkUser.imageUrl,
+          });
+        }
+
+        // Fetch user stats
+        const stats = await getUserStats(dbUser!.id);
+        setUser({ ...dbUser!, ...stats });
+      } catch (error) {
+        console.error("Failed to sync user:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    syncUser();
+  }, [clerkLoaded, isSignedIn, clerkUser]);
+
+  const fetchMainData = React.useCallback(async () => {
+    if (!user) return;
+    
     try {
       const [fetchedUsers, fetchedGoals] = await Promise.all([
         getUsers(),
@@ -58,14 +101,14 @@ export default function Home() {
       }
     } catch (err) {
       console.error("Failed to fetch data:", err);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [user]);
 
   React.useEffect(() => {
-    fetchMainData();
-  }, []);
+    if (user) {
+      fetchMainData();
+    }
+  }, [user, fetchMainData]);
 
   const handleSelectGoal = (goal: Goal) => {
     setSelectedGoal(goal);
@@ -78,20 +121,12 @@ export default function Home() {
     { id: "history", label: "Session History", icon: History },
   ];
 
-  if (!user && !loading) {
-    return <Login availableUsers={allUsers} onLogin={async (u) => {
-      try {
-        const stats = await getUserStats(u.id);
-        setUser({ ...u, ...stats });
-      } catch (error) {
-        console.error("Failed to fetch user stats:", error);
-        setUser(u);
-      }
-    }} />;
+  if (!clerkLoaded || loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading MindFlow...</div>;
   }
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading MindFlow...</div>;
+  if (!isSignedIn || !user) {
+    return <div className="min-h-screen flex items-center justify-center">Redirecting to sign in...</div>;
   }
 
   return (
@@ -159,7 +194,7 @@ export default function Home() {
               <Button
                 variant="ghost"
                 className="w-full justify-start mt-4 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl"
-                onClick={() => setUser(null)}
+                onClick={() => signOut()}
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out
@@ -259,7 +294,20 @@ export default function Home() {
                       }}
                     />
                   )}
-                  {currentView === "leaderboard" && <Leaderboard entries={leaderboard} />}
+                  {currentView === "leaderboard" && (
+                    <Leaderboard 
+                      entries={leaderboard} 
+                      goals={goals}
+                      onGoalChange={async (goalId) => {
+                        try {
+                          const fetchedLeaderboard = await getLeaderboard(goalId);
+                          setLeaderboard(fetchedLeaderboard);
+                        } catch (error) {
+                          console.error("Failed to fetch leaderboard:", error);
+                        }
+                      }}
+                    />
+                  )}
                   {currentView === "history" && user && (
                     <SessionHistory user={user} refreshKey={sessionHistoryRefreshKey} />
                   )}

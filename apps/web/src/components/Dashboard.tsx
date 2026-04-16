@@ -81,11 +81,10 @@ export function Dashboard({ user, goals, onSelectGoal, onCreateGoal }: Dashboard
         </motion.div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {[
           { label: "Total Study Time", value: `${user?.totalHours || 0}h`, icon: Clock, color: "text-blue-500", bg: "bg-blue-50" },
           { label: "Topics Done", value: user?.chaptersCompleted || 0, icon: Target, color: "text-brand-500", bg: "bg-brand-50" },
-          { label: "Respect Earned", value: user?.respectPoints || 0, icon: Flame, color: "text-orange-500", bg: "bg-orange-50" },
         ].map((stat, i) => (
           <motion.div key={stat.label} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 + i * 0.1 }}>
             <Card className="glass-card border-none">

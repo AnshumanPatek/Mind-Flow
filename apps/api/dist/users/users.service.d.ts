@@ -18,6 +18,7 @@ export declare class UsersService {
     findAll(): Promise<User[]>;
     findById(id: string): Promise<User>;
     findByEmail(email: string): Promise<User | null>;
+    findOrCreateByEmail(email: string, name: string, avatar?: string): Promise<User>;
     update(id: string, updateUserDto: UpdateUserDto): Promise<User>;
     remove(id: string): Promise<void>;
     heartbeat(id: string): Promise<User>;

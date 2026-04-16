@@ -1,24 +1,70 @@
 "use client";
 
+import React, { useState } from "react";
 import { motion } from "motion/react";
 import { ArrowUp, Flame, Medal, Trophy } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { LeaderboardEntry } from "@/types";
+import { LeaderboardEntry, Goal } from "@/types";
 import { cn } from "@/lib/utils";
 
-export function Leaderboard({ entries = [] }: { entries: LeaderboardEntry[] }) {
+interface LeaderboardProps {
+  entries: LeaderboardEntry[];
+  goals: Goal[];
+  onGoalChange: (goalId: string) => void;
+}
+
+export function Leaderboard({ entries = [], goals = [], onGoalChange }: LeaderboardProps) {
+  const [selectedGoalId, setSelectedGoalId] = useState(goals[0]?.id || "");
+  
+  React.useEffect(() => {
+    if (goals.length > 0 && !selectedGoalId) {
+      setSelectedGoalId(goals[0].id);
+    }
+  }, [goals, selectedGoalId]);
+
+  const handleGoalChange = (goalId: string) => {
+    setSelectedGoalId(goalId);
+    onGoalChange(goalId);
+  };
+
   const topThree = entries.slice(0, 3);
   
   return (
     <div className="space-y-8 pb-20">
-      <header>
-        <h1 className="text-4xl font-serif font-bold text-slate-900">Leaderboard</h1>
-        <p className="text-slate-500 mt-2">See who&apos;s leading the pack in your study groups.</p>
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-serif font-bold text-slate-900">Leaderboard</h1>
+          <p className="text-slate-500 mt-2">See who&apos;s leading the pack in your study groups.</p>
+        </div>
+        {goals.length > 1 && (
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-bold text-slate-600">Goal:</label>
+            <select
+              value={selectedGoalId}
+              onChange={(e) => handleGoalChange(e.target.value)}
+              className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            >
+              {goals.map((goal) => (
+                <option key={goal.id} value={goal.id}>
+                  {goal.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-10">
+      {entries.length === 0 ? (
+        <Card className="glass-card border-none p-12 text-center">
+          <Trophy className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-slate-900 mb-2">No members yet</h3>
+          <p className="text-slate-500">Add members to your goal to see the leaderboard!</p>
+        </Card>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-10">
         {topThree[1] && <PodiumPlace entry={topThree[1]} rank={2} delay={0.2} height="h-48" color="bg-slate-200" icon={<Medal className="w-6 h-6 text-slate-500" />} />}
         {topThree[0] && <PodiumPlace entry={topThree[0]} rank={1} delay={0.1} height="h-64" color="bg-yellow-100" icon={<Trophy className="w-8 h-8 text-yellow-600" />} isWinner />}
         {topThree[2] && <PodiumPlace entry={topThree[2]} rank={3} delay={0.3} height="h-40" color="bg-orange-100" icon={<Medal className="w-6 h-6 text-orange-600" />} />}
@@ -84,6 +130,8 @@ export function Leaderboard({ entries = [] }: { entries: LeaderboardEntry[] }) {
           </table>
         </div>
       </Card>
+        </>
+      )}
     </div>
   );
 }

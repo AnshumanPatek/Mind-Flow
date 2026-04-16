@@ -54,6 +54,13 @@ let UsersService = class UsersService {
     async findByEmail(email) {
         return this.userModel.findOne({ email }).exec();
     }
+    async findOrCreateByEmail(email, name, avatar) {
+        let user = await this.findByEmail(email);
+        if (!user) {
+            user = await this.create({ email, name, avatar });
+        }
+        return user;
+    }
     async update(id, updateUserDto) {
         const user = await this.userModel
             .findByIdAndUpdate(id, { $set: updateUserDto }, { new: true, runValidators: true })
